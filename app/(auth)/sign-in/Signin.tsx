@@ -101,9 +101,9 @@ const Signin = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <Link href="">
+              <Link href="/dashboard">
                <div className="flex justify-start items-center cursor-pointer mt-6 ml-15 md:ml-0">
-                 <CustomButton title="Continue with Whorkaz" onClick={() => alert("Button clicked!")} />
+                 <CustomButton title="Continue with Whorkaz" />
               </div>
               </Link>
              

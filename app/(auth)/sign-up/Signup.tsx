@@ -20,7 +20,7 @@ const Signup = () => {
         {/* Right Section - Signup Form */}
         <div className="w-full max-w-[450px] lg:max-w-full lg:w-1/2 flex  lg:p-8 bg-[#FFFDFA]  transition-colors duration-300 mt-5">
             
-          <div className="w-full mx-6 my-12 lg:p-8 rounded-2xl bg-white  ">
+          <div className="w-full mx-6 my-12 lg:p-8 rounded-2xl bg-white">
             {/* Logo */}
             <div className="flex -mb-3 ml-20 md:-ml-2">
               <Image
