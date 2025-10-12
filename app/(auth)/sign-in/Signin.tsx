@@ -19,13 +19,6 @@ const Signin = () => {
         {/* Right Section - Signup Form */}
         <div className="w-full max-w-[450px] lg:max-w-full lg:w-1/2 flex  lg:p-8 bg-[#FFFDFA]  transition-colors duration-300 mt-0 md:mt-5">            
           <div className="w-full mx-6 my-12 p-0 md:p-8 rounded-2xl bg-white  ">
-            {/* "Looking for work?" link at top right (Desktop) */}
-          <div className="absolute top-8 right-8 text-sm hidden lg:block">
-            <a  className="hover:underline text-[#4B4B56] font-semibold">
-              Looking for work?
-              <span className="font-semibold text-[#2E00B0] cursor-pointer"> Join as a freelancer</span>
-            </a>
-          </div>
             {/* Logo */}
             <div className="flex -mb-3 ml-20 md:-ml-2">
               <Image
@@ -35,13 +28,6 @@ const Signin = () => {
                 height={34}
                 className="object-contain"
               />
-            </div>
-            {/* This will only appear on small screen */}
-            <div className="text-sm lg:block ml-13 lg:hidden my-4">
-              <a  className="hover:underline text-[#4B4B56] font-semibold">
-                Looking for work?
-                <span className="font-semibold text-[#2E00B0] cursor-pointer"> Join as a freelancer</span>
-              </a>
             </div>
             <h2 className="text-[20px] ml-10 md:ml-0 md:text-[28px] font-semibold text-[#191926] dark:text-[[#191926]] mb-4 md:mb-0 md:my-4 ">
               Sign in to find trusted experts
@@ -122,13 +108,6 @@ const Signin = () => {
                 <p className=" cursor-pointer text-[#3900DC] dark:text-[#4A00F4] hover:underline font-semibold">Sign up</p> 
               </Link>
             </div>
-            {/* Freelancer Link */}
-            {/* <p className="mt-2 text-center text-sm text-[#3900DC] dark:text-[#4A00F4] lg:hidden">
-              Looking for work?{" "}
-              <a href="/join-freelancer" className="hover:underline">
-                Join as a freelancer
-              </a>
-            </p> */}
           </div>
         </div>
       </div>
