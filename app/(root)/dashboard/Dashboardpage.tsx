@@ -43,7 +43,7 @@ const Dashboardpage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F9F6F1] text-gray-900">
+    <div className="min-h-screen bg-white dark:bg-white text-gray-900">
       {/* Header */}
       <Header title="Dashboard" />
 
