@@ -56,6 +56,26 @@ const SettingsIcon = () => (
     </svg>
 );
 
+const LogoutIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    {/* Door / screen outline */}
+    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+    {/* Logout arrow */}
+    <polyline points="10 17 15 12 10 7" />
+    <line x1="15" y1="12" x2="3" y2="12" />
+  </svg>
+);
+
+
 export const Navbar = () => {
     const [activeLink, setActiveLink] = useState('');
     const pathname = usePathname();
@@ -86,7 +106,7 @@ export const Navbar = () => {
     return (
         <>
             {/* Desktop Sidebar (visible on screens larger than 'sm') */}
-            <aside className="hidden sm:flex h-full flex-col w-[308px] p-4 space-y-4 bg-[#FEFEFF] border-r-1 border-solid border-[#DBDBE3] text-zinc-900">
+            <aside className="hidden sm:flex h-screen flex-col w-[308px] p-4 space-y-4 bg-[#FEFEFF] border-r-1 border-solid border-[#DBDBE3] text-zinc-900">
                 <div className="flex items-center space-x-2 mb-6">
                     <Image
                         src="/assets/icons/AppLogo.png"
@@ -140,41 +160,10 @@ export const Navbar = () => {
                         </a>
                     ))}
                 </nav>
-
-                {/* Explore Section */}
-                {/* <div className="mt-3">
-                    <div className="text-xs text-gray-500 font-medium tracking-wider uppercase mb-2">Explore</div>
-                    <nav className="space-y-1">
-                        {exploreItems.map((item) => (
-                            <a 
-                                key={item.name} 
-                                href={item.link}
-                                onClick={() => setActiveLink(item.name.toLowerCase().replace(' ', ''))}
-                                className={`flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-200 transition-colors
-                                    ${activeLink === item.name.toLowerCase().replace(' ', '') 
-                                        ? 'bg-purple-100 border border-[#AA5FBD] text-purple-700' 
-                                        : ''}`}
-                            >
-                                <div className={`${activeLink === item.name.toLowerCase().replace(' ', '') ? 'text-purple-700 text-[18px] font-semibold' : 'text-[#32323E] text-[18px] font-semibold'}`}>
-                                    {item.icon}
-                                </div>
-                                <span>{item.name}</span>
-                            </a>
-                        ))}
-                    </nav>
-                </div> */}
-
-                {/* Invite Card */}
-                <div className="bg-purple-50 border border-[#AA5FBD] p-3 rounded-xl mt-8">
-                    <div className="text-[15px] text-[#0B002C] font-semibold mb-1">Invite Your Friends & Earn Rewards</div>
-                    <div className="text-[14px] text-[#95959F] font-medium mb-4">Share your referral link and earn credits when your friends hire or work on jobs.</div>
-                    <button className="w-[178px] bg-[#3900DC] hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-full flex items-center justify-center space-x-2 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5l6 6m0 0l-6 6m6-6h-12" />
-                        </svg>
-                        <span>Invite workmen</span>
-                    </button>
-                </div>
+                <button className="flex items-center gap-2 text-gray-700 hover:text-red-500 mb-12 p-3">
+                    <LogoutIcon />
+                    Logout
+                </button>
             </aside>
 
             {/* Mobile Bottom Tab Bar (visible on screens smaller than 'sm') */}
@@ -182,10 +171,10 @@ export const Navbar = () => {
                 <div className="flex justify-around items-center h-16">
                     {[
                         { name: 'Dashboard', icon: <DashboardIcon />, link: '/dashboard' },
-                        { name: 'My jobs', icon: <JobsIcon />, link: '/my-job' },
-                        { name: 'Discover', icon: <DiscoverIcon />, link: '/discover' },
+                        { name: 'Disbute', icon: <JobsIcon />, link: '/dispute-center' },
+                        { name: 'Payment', icon: <PaymentsIcon />, link: '/payments' },
                         { name: 'Courses', icon: <CoursesIcon />, link: '/courses' },
-                        { name: 'Messages', icon: <MessagesIcon />, link: '/messages' },
+                        { name: 'Settings', icon: <SettingsIcon />, link: '/settings' },
                     ].map((item) => (
                         <a 
                             key={item.name} 
