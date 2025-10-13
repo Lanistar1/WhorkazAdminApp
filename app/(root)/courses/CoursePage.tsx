@@ -120,7 +120,7 @@ const CoursePage = () => {
           <div className="relative w-full md:w-2/3">
             <input
               type="text"
-              placeholder="Search by reference"
+              placeholder="Search by course title"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full p-2 pl-10 border border-[#C7C7CF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3900DC]"
@@ -136,10 +136,9 @@ const CoursePage = () => {
               className="p-2 border border-[#C7C7CF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3900DC]"
             >
               <option value="all">All Statuses</option>
-              <option value="completed">Completed</option>
-              <option value="pending">Pending</option>
-              <option value="failed">Failed</option>
-              <option value="refund">Refund</option>
+              <option value="completed">Accepted</option>
+              <option value="pending">Rejected</option>
+              <option value="failed">Resubmit</option>
             </select>
             <button
               onClick={exportToCSV}
