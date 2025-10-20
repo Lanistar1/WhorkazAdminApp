@@ -48,9 +48,9 @@ const UserManagement = () => {
   ];
 
   const userData = [
-    { name: "John Doe", email: "john@example.com", role: "Admin", status: "Active", date : "20/0802022" },
-    { name: "Jane Smith", email: "jane@example.com", role: "User", status: "Inactive", date : "20/0802022" },
-    { name: "Bob Johnson", email: "bob@example.com", role: "Moderator", status: "Pending", date : "20/0802022" },
+    { id: "1", name: "John Doe", email: "john@example.com", role: "Admin", status: "Active", date : "20/0802022" },
+    { id: "1", name: "Jane Smith", email: "jane@example.com", role: "User", status: "Inactive", date : "20/0802022" },
+    { id: "1", name: "Bob Johnson", email: "bob@example.com", role: "Moderator", status: "Pending", date : "20/0802022" },
   ];
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -76,7 +76,9 @@ const UserManagement = () => {
   const exportToCSV = () => {
     const headers = userColumns.map((col) => col.label).join(",");
     const rows = filteredData.map((item) =>
-      userColumns.map((col) => item[col.key]).join(",")
+        userColumns.map((col) => 
+            col.key === "status" ? item.status : (item as Record<string, any>)[col.key]
+        ).join(",")
     );
     const csvContent = [headers, ...rows].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
@@ -128,6 +130,7 @@ const UserManagement = () => {
         </div>
 
         <Table columns={userColumns} data={filteredData} onAction={handleAction} />
+        
       </div>
     </div>
   );
