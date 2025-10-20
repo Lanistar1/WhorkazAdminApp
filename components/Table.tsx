@@ -1,17 +1,17 @@
 // /* eslint-disable @typescript-eslint/no-explicit-any */
-// 'use client'
+
+
 // import React, { useState, useRef, useEffect } from "react";
 // import { MoreHorizontal } from "lucide-react";
-// import Link from "next/link";
 
 // interface TableColumn {
 //   key: string;
 //   label: string;
-//   render?: (item: any) => React.ReactNode;
+//   render?: (item: any, updateStatus?: (id: string | number, newStatus: string) => void) => React.ReactNode;
 // }
 
 // interface TableItem {
-// //   id: string | number;
+//   id: string | number;
 //   [key: string]: any;
 // }
 
@@ -19,22 +19,10 @@
 //   columns: TableColumn[];
 //   data: TableItem[];
 //   onAction?: (item: TableItem, action: string) => void;
+//   updateStatus?: (id: string | number, newStatus: string) => void;
 // }
 
-// const getStatusClass = (status: string) => {
-//   switch (status.toLowerCase()) {
-//     case "active":
-//       return "bg-green-100 text-green-800";
-//     case "inactive":
-//       return "bg-red-100 text-red-800";
-//     case "pending":
-//       return "bg-yellow-100 text-yellow-800";
-//     default:
-//       return "";
-//   }
-// };
-
-// const Table: React.FC<TableProps> = ({ columns, data, onAction }) => {
+// const Table: React.FC<TableProps> = ({ columns, data, onAction, updateStatus }) => {
 //   const [isModalOpen, setIsModalOpen] = useState(false);
 //   const [modalPosition, setModalPosition] = useState({ top: 0, right: 0 });
 //   const [selectedItem, setSelectedItem] = useState<TableItem | null>(null);
@@ -93,7 +81,7 @@
 //             >
 //               {columns.map((column) => (
 //                 <td key={column.key} className="p-4 text-sm text-gray-900">
-//                   {column.render ? column.render(item) : item[column.key]}
+//                   {column.render ? column.render(item, updateStatus) : item[column.key]}
 //                 </td>
 //               ))}
 //               <td className="p-4">
@@ -156,36 +144,48 @@
 
 
 
+'use client';
 
 import React, { useState, useRef, useEffect } from "react";
 import { MoreHorizontal } from "lucide-react";
 
-interface TableColumn {
-  key: string;
+// Define a generic column interface
+interface TableColumn<T> {
+  key: keyof T | string;
   label: string;
-  render?: (item: any, updateStatus?: (id: string | number, newStatus: string) => void) => React.ReactNode;
+  render?: (
+    item: T,
+    updateStatus?: (id: string | number, newStatus: string) => void
+  ) => React.ReactNode;
 }
 
-interface TableItem {
+// Define the shape of a table item
+export interface TableItem {
   id: string | number;
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined;
 }
 
-interface TableProps {
-  columns: TableColumn[];
-  data: TableItem[];
-  onAction?: (item: TableItem, action: string) => void;
+// Props for the table
+interface TableProps<T extends TableItem> {
+  columns: TableColumn<T>[];
+  data: T[];
+  onAction?: (item: T, action: string) => void;
   updateStatus?: (id: string | number, newStatus: string) => void;
 }
 
-const Table: React.FC<TableProps> = ({ columns, data, onAction, updateStatus }) => {
+const Table = <T extends TableItem>({
+  columns,
+  data,
+  onAction,
+  updateStatus,
+}: TableProps<T>) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalPosition, setModalPosition] = useState({ top: 0, right: 0 });
-  const [selectedItem, setSelectedItem] = useState<TableItem | null>(null);
-  const iconRef = useRef<HTMLSpanElement>(null);
+  const [selectedItem, setSelectedItem] = useState<T | null>(null);
+  const iconRef = useRef<SVGSVGElement>(null); // ✅ correct type for Lucide icon (SVG element)
 
-  const handleIconClick = (event: React.MouseEvent, item: TableItem) => {
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  const handleIconClick = (event: React.MouseEvent<SVGSVGElement>, item: T) => {
+    const rect = event.currentTarget.getBoundingClientRect();
     setModalPosition({
       top: rect.bottom + window.scrollY,
       right: window.innerWidth - rect.right + window.scrollX,
@@ -222,7 +222,7 @@ const Table: React.FC<TableProps> = ({ columns, data, onAction, updateStatus }) 
         <thead className="bg-gray-50">
           <tr className="text-left text-gray-500 text-sm">
             {columns.map((column) => (
-              <th key={column.key} className="p-4 font-semibold">
+              <th key={String(column.key)} className="p-4 font-semibold">
                 {column.label}
               </th>
             ))}
@@ -233,11 +233,15 @@ const Table: React.FC<TableProps> = ({ columns, data, onAction, updateStatus }) 
           {data.map((item, index) => (
             <tr
               key={item.id}
-              className={`border-t border-gray-200 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
+              className={`border-t border-gray-200 ${
+                index % 2 === 0 ? "bg-white" : "bg-gray-50"
+              }`}
             >
               {columns.map((column) => (
-                <td key={column.key} className="p-4 text-sm text-gray-900">
-                  {column.render ? column.render(item, updateStatus) : item[column.key]}
+                <td key={String(column.key)} className="p-4 text-sm text-gray-900">
+                  {column.render
+                    ? column.render(item, updateStatus)
+                    : String(item[column.key as keyof T] ?? "")}
                 </td>
               ))}
               <td className="p-4">
