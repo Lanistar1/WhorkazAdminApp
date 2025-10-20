@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import Table from "@/components/Table";
 import Header from "@/components/Header";
-import { Search, Filter, Download } from "lucide-react"; // Assuming icons from lucide-react
+import { Search, Download } from "lucide-react"; // Assuming icons from lucide-react
 
 interface TableColumn {
   key: string;
@@ -48,9 +48,9 @@ const DisputeCenter = () => {
   ];
 
   const userData = [
-    { name: "John Doe", evidence: "SC_23456_img", type: "Job quality", status: "Approve", provider : "Sandra Onyekachi" },
-    { name: "Jane Smith", evidence: "SC_23456_img", type: "Job quality", status: "Reject", provider : "Sandra Onyekachi" },
-    { name: "Bob Johnson", evidence: "SC_23456_img", type: "Job quality", status: "Resubmit", provider : "Sandra Onyekachi" },
+    { id: "1", name: "John Doe", evidence: "SC_23456_img", type: "Job quality", status: "Approve", provider : "Sandra Onyekachi" },
+    { id: "1", name: "Jane Smith", evidence: "SC_23456_img", type: "Job quality", status: "Reject", provider : "Sandra Onyekachi" },
+    { id: "1", name: "Bob Johnson", evidence: "SC_23456_img", type: "Job quality", status: "Resubmit", provider : "Sandra Onyekachi" },
   ];
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -76,7 +76,9 @@ const DisputeCenter = () => {
   const exportToCSV = () => {
     const headers = userColumns.map((col) => col.label).join(",");
     const rows = filteredData.map((item) =>
-      userColumns.map((col) => item[col.key]).join(",")
+      userColumns.map((col) => 
+        col.key === "status" ? item.status : (item as Record<string, any>)[col.key]
+      ).join(",")
     );
     const csvContent = [headers, ...rows].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
