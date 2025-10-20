@@ -61,10 +61,10 @@ const CoursePage = () => {
   ];
 
   const [userData, setUserData] = useState([
-    { courseTitle: "Wiring Basics for Beginners", submittedBy: "David Onuoha", submittedDate: "19-06-24", viewCourse: "View course", status: "Accepted" },
-    { courseTitle: "Wiring Basics for Beginners", submittedBy: "Ibrahim Musa", submittedDate: "19-06-24", viewCourse: "View course", status: "Rejected" },
-    { courseTitle: "Wiring Basics for Beginners", submittedBy: "David Onuoha", submittedDate: "19-06-24", viewCourse: "View course", status: "Resubmit" },
-    { courseTitle: "Wiring Basics for Beginners", submittedBy: "Ibrahim Musa", submittedDate: "19-06-24", viewCourse: "View course", status: "Accepted" },
+    { id: "1", courseTitle: "Wiring Basics for Beginners", submittedBy: "David Onuoha", submittedDate: "19-06-24", viewCourse: "View course", status: "Accepted" },
+    { id: "2", courseTitle: "Wiring Basics for Beginners", submittedBy: "Ibrahim Musa", submittedDate: "19-06-24", viewCourse: "View course", status: "Rejected" },
+    { id: "3", courseTitle: "Wiring Basics for Beginners", submittedBy: "David Onuoha", submittedDate: "19-06-24", viewCourse: "View course", status: "Resubmit" },
+    { id: "4", courseTitle: "Wiring Basics for Beginners", submittedBy: "Ibrahim Musa", submittedDate: "19-06-24", viewCourse: "View course", status: "Accepted" },
 
   ]);
 
@@ -99,7 +99,9 @@ const CoursePage = () => {
   const exportToCSV = () => {
     const headers = userColumns.map((col) => col.label).join(",");
     const rows = filteredData.map((item) =>
-      userColumns.map((col) => (col.key === "status" ? item.status : item[col.key])).join(",")
+    userColumns.map((col) => 
+      col.key === "status" ? item.status : (item as Record<string, any>)[col.key]
+      ).join(",")
     );
     const csvContent = [headers, ...rows].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
