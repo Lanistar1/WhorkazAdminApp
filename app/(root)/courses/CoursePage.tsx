@@ -250,6 +250,7 @@ import Table2 from "@/components/Table2";
 import CustomModal from "@/components/CustomModal";
 import SuccessModal from "@/components/SuccessModal";
 import Link from "next/link"; // Import Next.js Link for routing
+import CustomButton from "@/components/CustomButton";
 
 const StatusSelect = ({
   item,
@@ -459,6 +460,13 @@ const CoursePage = () => {
               <Download className="h-5 w-5" />
               Export CSV
             </button>
+            <Link href="/courses/new-course">
+               <button
+                className="bg-[#3900DC] cursor-pointer text-white font-semibold rounded-[32px] w-[80px] py-2  px-5 flex items-center justify-center hover:opacity-90 transition"
+              >
+                New
+              </button>
+            </Link>
           </div>
         </div>
 
