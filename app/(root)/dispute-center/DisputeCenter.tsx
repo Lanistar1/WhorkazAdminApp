@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import Table from "@/components/Table";
 import Header from "@/components/Header";
 import { Search, Download } from "lucide-react"; // Assuming icons from lucide-react
+import Table2 from "@/components/Table2";
 
 interface TableColumn {
   key: string;
@@ -129,7 +130,7 @@ const DisputeCenter = () => {
           </div>
         </div>
 
-        <Table columns={userColumns} data={filteredData} onAction={handleAction} />
+        <Table2 columns={userColumns} data={filteredData} onAction={handleAction} />
       </div>
     </div>
   );

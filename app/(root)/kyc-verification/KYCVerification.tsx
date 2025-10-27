@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import Table from "@/components/Table";
 import Header from "@/components/Header";
 import { Search, Download } from "lucide-react"; // Removed Filter icon as it's not used
+import Table2 from "@/components/Table2";
 
 interface TableColumn {
   key: string;
@@ -154,7 +155,7 @@ const KYCVerification = () => {
           </div>
         </div>
 
-        <Table columns={userColumns} data={filteredData} onAction={handleAction} updateStatus={updateStatus} />
+        <Table2 columns={userColumns} data={filteredData} onAction={handleAction} updateStatus={updateStatus} />
       </div>
     </div>
   );

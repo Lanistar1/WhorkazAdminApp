@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from "react";
-import { MoreHorizontal } from "lucide-react";
 
 // Define a generic column interface
 interface TableColumn<T> {
@@ -27,7 +26,7 @@ interface TableProps<T extends TableItem> {
   updateStatus?: (id: string | number, newStatus: string) => void;
 }
 
-const Table = <T extends TableItem>({
+const Table2 = <T extends TableItem>({
   columns,
   data,
   onAction,
@@ -38,15 +37,6 @@ const Table = <T extends TableItem>({
   const [selectedItem, setSelectedItem] = useState<T | null>(null);
   const iconRef = useRef<SVGSVGElement>(null); // ✅ correct type for Lucide icon (SVG element)
 
-  const handleIconClick = (event: React.MouseEvent<SVGSVGElement>, item: T) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    setModalPosition({
-      top: rect.bottom + window.scrollY,
-      right: window.innerWidth - rect.right + window.scrollX,
-    });
-    setSelectedItem(item);
-    setIsModalOpen(true);
-  };
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -80,7 +70,6 @@ const Table = <T extends TableItem>({
                 {column.label}
               </th>
             ))}
-            <th className="p-4 font-semibold">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -98,13 +87,6 @@ const Table = <T extends TableItem>({
                     : String(item[column.key as keyof T] ?? "")}
                 </td>
               ))}
-              <td className="p-4">
-                <MoreHorizontal
-                  ref={iconRef}
-                  className="h-5 w-5 text-gray-500 cursor-pointer"
-                  onClick={(e) => handleIconClick(e, item)}
-                />
-              </td>
             </tr>
           ))}
         </tbody>
@@ -153,4 +135,4 @@ const Table = <T extends TableItem>({
   );
 };
 
-export default Table;
+export default Table2;
