@@ -95,7 +95,7 @@ export const Navbar = () => {
         { name: 'Dispute Center', icon: <CoursesIcon />, link: '/dispute-center' },
         { name: 'Reports & Analytics', icon: <MessagesIcon />, link: '/reports' },
         { name: 'Payments & Transactions', icon: <PaymentsIcon />, link: '/payments' },
-        { name: 'Courses & Content', icon: <PaymentsIcon />, link: '/courses' },
+        { name: 'Apprenticeship', icon: <PaymentsIcon />, link: '/courses' },
         { name: 'Settings', icon: <SettingsIcon />, link: '/settings' },
     ];
 
@@ -128,7 +128,7 @@ export const Navbar = () => {
                         className="object-contain"
                     />
                         <div>
-                            <div className="text-[14px] font-medium text-[#32323E]">CLIENT WORKSPACE</div>
+                            <div className="text-[14px] font-medium text-[#32323E]">ADMIN WORKSPACE</div>
                             <div className="text-[16px] font-semibold text-[#95959F]">Jason Alexander</div>
                         </div>
                     </div>
@@ -173,7 +173,7 @@ export const Navbar = () => {
                         { name: 'Dashboard', icon: <DashboardIcon />, link: '/dashboard' },
                         { name: 'Disbute', icon: <JobsIcon />, link: '/dispute-center' },
                         { name: 'Payment', icon: <PaymentsIcon />, link: '/payments' },
-                        { name: 'Courses', icon: <CoursesIcon />, link: '/courses' },
+                        { name: 'Apprenticeship', icon: <CoursesIcon />, link: '/courses' },
                         { name: 'Settings', icon: <SettingsIcon />, link: '/settings' },
                     ].map((item) => (
                         <a 

@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import Table from "@/components/Table";
 import Header from "@/components/Header";
-import { Search, Filter, Download } from "lucide-react"; // Assuming icons from lucide-react
+import { Search, Download } from "lucide-react"; // Assuming icons from lucide-react
 
 interface TableColumn {
   key: string;
