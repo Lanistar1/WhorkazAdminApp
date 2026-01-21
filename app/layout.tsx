@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Red_Hat_Display } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
+import QueryProvider from "./provider/QueryProvider";
+import { AuthProvider } from "./context/AuthContext";
 
 
 const redHatDisplay = Red_Hat_Display({
@@ -23,14 +25,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${redHatDisplay.className} transition-colors duration-300`}>
-        <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-          </ThemeProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+            </ThemeProvider>
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );
