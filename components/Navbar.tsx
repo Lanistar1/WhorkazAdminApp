@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Image from "next/image";
 import { usePathname } from 'next/navigation';
+import { toast } from 'react-toastify';
+import { useAuth } from '@/app/context/AuthContext';
+import LogoutModal from './LogoutModal';
 
 // Using inline SVG for icons to keep the component self-contained.
 const DashboardIcon = () => (
@@ -80,6 +83,35 @@ export const Navbar = () => {
     const [activeLink, setActiveLink] = useState('');
     const pathname = usePathname();
 
+    const { logout, token } = useAuth();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    // Call your backend logout endpoint
+    fetch(`https://whorkaz.hordun.tech/api/v1/admin/auth/logout`, {
+      method: 'POST', // or GET, depending on backend
+      headers: {
+        Authorization: `Bearer ${token}`, // make sure token is available
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(() => {
+        logout(); // clear local state and redirect
+        toast.success("Logged out successfully");
+      })
+      .catch((err) => {
+        console.error("Logout failed:", err);
+        toast.error("Failed to log out");
+      })
+      .finally(() => {
+        setShowLogoutModal(false);
+      });
+  };
+
     useEffect(() => {
         const currentPath = pathname || '/dashboard';
         const newActiveLink = navItems.find(item => item.link === currentPath)?.name.toLowerCase().replace(' ', '') ||
@@ -91,6 +123,7 @@ export const Navbar = () => {
     const navItems = [
         { name: 'Dashboard', icon: <DashboardIcon />, link: '/dashboard' },
         { name: 'User Management', icon: <JobsIcon />, link: '/user-management' },
+        { name: 'Admin Management', icon: <JobsIcon />, link: '/admin' },
         { name: 'KYC & Verification', icon: <DiscoverIcon />, link: '/kyc-verification' },
         { name: 'Dispute Center', icon: <CoursesIcon />, link: '/dispute-center' },
         { name: 'Reports & Analytics', icon: <MessagesIcon />, link: '/reports' },
@@ -160,7 +193,10 @@ export const Navbar = () => {
                         </a>
                     ))}
                 </nav>
-                <button className="flex items-center gap-2 text-gray-700 hover:text-red-500 mb-12 p-3">
+                <button 
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 text-gray-700 hover:text-red-500 mb-12 p-3 w-full text-left cursor-pointer"
+                    >
                     <LogoutIcon />
                     Logout
                 </button>
@@ -197,6 +233,13 @@ export const Navbar = () => {
                     ))}
                 </div>
             </nav>
+
+            {/* Logout Confirmation Modal */}
+            <LogoutModal
+                isOpen={showLogoutModal}
+                onClose={() => setShowLogoutModal(false)}
+                onConfirm={confirmLogout}
+            />
         </>
     );
 };

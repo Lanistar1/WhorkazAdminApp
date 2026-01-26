@@ -3,10 +3,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { toast } from "react-toastify";
-import { approveCourse, createAdmin, createCategory, createService, deleteAdminById, deleteCategoryById, deleteServiceById, fetchAdmin, fetchAdminActivity, fetchAdminById, fetchCategory, fetchCategoryById, fetchCourseById, fetchCourses, fetchDashboardGeographicDistribution, fetchDashboardMetric, fetchDashboardRevenueTrends, fetchDashboardServiceCategories, fetchDashboardTopPerformingProviders, fetchDashboardUserGrowth, fetchService, fetchServiceById, fetchUserById, fetchUsers, rejectCourse, signIn, updateAdminProfile, updateCategory, updateCourse, updateService, updateUserProfile, updateUserStatus, userBanStatus } from "./api";
-import { Admin_Query_Keys, approveCoursetype, createAdminType, createCategoryType, createServiceType, LoginCredentials, LoginResponse, rejectCoursetype, updateCategoryType, updateCoursetype, updateServiceType, updateUserProfileType, updateUserStatusType, userBanStatusUpdateType, userProfile } from "./type";
+import { approveCourse, createAdmin, createCategory, createOnlineCourse, createPhysicalCourse, createService, deleteAdminById, deleteCategoryById, deleteServiceById, fetchAdmin, fetchAdminActivity, fetchAdminById, fetchAdminProfile, fetchCategory, fetchCategoryById, fetchCourseById, fetchCourses, fetchDashboardGeographicDistribution, fetchDashboardMetric, fetchDashboardRevenueTrends, fetchDashboardServiceCategories, fetchDashboardTopPerformingProviders, fetchDashboardUserGrowth, fetchNotificationPreferences, fetchService, fetchServiceById, fetchUserById, fetchUsers, rejectCourse, resetNotificationPreferences, signIn, updateAdminProfile, updateCategory, updateCourse, updateNotificationPreferences, updateService, updateUserProfile, updateUserStatus, userBanStatus } from "./api";
+import { Admin_Query_Keys, AdminUsersResponse, approveCoursetype, CourseDetail, createAdminType, createCategoryType, createServiceType, DashboardMetrics, GetCoursesResponse, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedUsers, rejectCoursetype, updateCategoryType, updateCoursetype, updateServiceType, updateUserProfileType, updateUserStatusType, userBanStatusUpdateType, userProfile } from "./type";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 
 
 // ======= Signin call ========
@@ -28,11 +29,11 @@ export const useSigninAccount = () => {
 export const useGetAdmin = () => {
   const { token } = useAuth();
 
-  return useQuery<userProfile, Error>({
-    queryKey: ["user-profile"],
+  return useQuery<AdminUsersResponse, Error>({
+    queryKey: ["admins", "list"],
     queryFn: () => fetchAdmin(token as string),
     enabled: !!token,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 };
 
@@ -76,7 +77,7 @@ export const useDeleteAdmin = () => {
       // OPTIONAL: Show a success toast notification
       toast.success("Admin deleted successfully.");
 
-      // ✅ Temporary fix: Reload the entire browser window
+      //Reload the entire browser window
       window.location.reload();
     },
     
@@ -142,21 +143,24 @@ export const useUpdateAdminProfile = (id: string) => {
 
 //=====fetching User ========
 export const useGetUsers = (
-    filters: {
+  filters: {
+    keyword?: string;
     status?: string;
     role?: string;
-    keyword?: string;
   } = {}
 ) => {
   const { token } = useAuth();
 
-  return useQuery<userProfile, Error>({
-    queryKey: ["user-profile", filters],
-    queryFn: () => fetchUsers(token as string),
+  return useQuery<PaginatedUsers, Error>({
+    queryKey: ["users", filters],               // more semantic than "user-profile"
+    queryFn: () => fetchUsers(token as string, filters),
     enabled: !!token,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
+    // Optional but recommended when filtering:
+    // keepPreviousData: true,
   });
 };
+
 
 
 //=====fetching User detail ========
@@ -254,7 +258,7 @@ export const useUpdateUserProfile = (id: string) => {
 
 //=====fetching Course list ========
 export const useGetCourseList = (
-    filters: {
+  filters: {
     status?: string;
     category?: string;
     keyword?: string;
@@ -262,74 +266,64 @@ export const useGetCourseList = (
 ) => {
   const { token } = useAuth();
 
-  return useQuery<userProfile, Error>({
-    queryKey: ["user-profile", filters],
+  return useQuery<PaginatedCourses, Error>({
+    queryKey: ["courses", "list", filters],
     queryFn: () => fetchCourses(token as string),
     enabled: !!token,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 };
 
 
 //=====fetching course detail ========
-export const useCourseById = (id: string, token: string) => {
-  return useQuery<userProfile, Error>({ // Added type for useQuery
-    queryKey: [Admin_Query_Keys.Admin_ID, id],
-    queryFn: () => fetchCourseById(id, token),
-    enabled: !!id && !!token, // Ensure it only runs if both are available
+export const useCourseById = (id: string) => {
+  const { token } = useAuth();
+
+  return useQuery<CourseDetail, Error>({
+    queryKey: ["course", "detail", id],
+    queryFn: () => fetchCourseById(id, token as string),
+    enabled: !!id && !!token,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
   });
 };
 
 
 //======== approve course ================
-export const useApproveCourse = (id: string) => {
+export const useApproveCourse = () => {
   const { token } = useAuth();
   return useMutation({
-    mutationFn: async (data: approveCoursetype) => approveCourse(data, token, id),
+    mutationFn: async ({ id, data }: { id: string; data: approveCoursetype }) =>
+      approveCourse(data, token, id),
     onSuccess: () => {
-      // Show success toast notification
-      toast.success(`Course approved successfully`);
+      toast.success("Course approved successfully");
+      // Optional: invalidate courses list query to refresh
+      // queryClient.invalidateQueries({ queryKey: ["courses", "list"] });
     },
     onError: (error: any) => {
-      // Show error toast notification
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        // If the server returned a specific message, display it
-        toast.error(`Error: ${error.response.data.message}`);
-      } else {
-        // If the error does not have a response message, display the generic error message
-        toast.error(`Error occurred: ${error.message}`);
-      }
+      toast.error(
+        error.response?.data?.message || "Error approving course"
+      );
     },
   });
 };
 
 
 //======== reject course ================
-export const useRejectCourse = (id: string) => {
+export const useRejectCourse = () => {
   const { token } = useAuth();
   return useMutation({
-    mutationFn: async (data: rejectCoursetype) => rejectCourse(data, token, id),
+    mutationFn: async ({ id, data }: { id: string; data: rejectCoursetype }) =>
+      rejectCourse(data, token, id),
     onSuccess: () => {
-      // Show success toast notification
-      toast.success(`Course rejected successfully`);
+      toast.success("Course rejected successfully");
+      // Optional: invalidate courses list
+      // queryClient.invalidateQueries({ queryKey: ["courses", "list"] });
     },
     onError: (error: any) => {
-      // Show error toast notification
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        // If the server returned a specific message, display it
-        toast.error(`Error: ${error.response.data.message}`);
-      } else {
-        // If the error does not have a response message, display the generic error message
-        toast.error(`Error occurred: ${error.message}`);
-      }
+      toast.error(
+        error.response?.data?.message || "Error rejecting course"
+      );
     },
   });
 };
@@ -357,6 +351,50 @@ export const useUpdateCourse = (id: string) => {
         // If the error does not have a response message, display the generic error message
         toast.error(`Error occurred: ${error.message}`);
       }
+    },
+  });
+};
+
+//====== create online course ======
+export const useCreateOnlineCourse = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createOnlineCourse,
+    onSuccess: (data) => {
+      toast.success("Online course created successfully!");
+      // Optionally invalidate/refetch courses list
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
+      queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to create online course";
+      toast.error(message);
+    },
+  });
+};
+
+//====== create physical course ======
+export const useCreatePhysicalCourse = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createPhysicalCourse,
+    onSuccess: (data) => {
+      toast.success("Online course created successfully!");
+      // Optionally invalidate/refetch courses list
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
+      queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to create online course";
+      toast.error(message);
     },
   });
 };
@@ -566,12 +604,11 @@ export const useDeleteService = () => {
 //=====fetching Dashboard Metrics ========
 export const useGetDashboardMetric = () => {
   const { token } = useAuth();
-
-  return useQuery<userProfile, Error>({
-    queryKey: ["user-profile"],
+  return useQuery<DashboardMetrics, Error>({
+    queryKey: ["dashboard-metrics"], // Updated unique key
     queryFn: () => fetchDashboardMetric(token as string),
     enabled: !!token,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 };
 
@@ -579,7 +616,7 @@ export const useGetDashboardMetric = () => {
 export const useGetDashboardUserGrowth = () => {
   const { token } = useAuth();
 
-  return useQuery<userProfile, Error>({
+  return useQuery<any, Error>({
     queryKey: ["user-profile"],
     queryFn: () => fetchDashboardUserGrowth(token as string),
     enabled: !!token,
@@ -592,7 +629,7 @@ export const useGetDashboardUserGrowth = () => {
 export const useGetDashboardRevenueTrends = () => {
   const { token } = useAuth();
 
-  return useQuery<userProfile, Error>({
+  return useQuery<any, Error>({
     queryKey: ["user-profile"],
     queryFn: () => fetchDashboardRevenueTrends(token as string),
     enabled: !!token,
@@ -604,7 +641,7 @@ export const useGetDashboardRevenueTrends = () => {
 export const useGetDashboardServiceCategories = () => {
   const { token } = useAuth();
 
-  return useQuery<userProfile, Error>({
+  return useQuery<any, Error>({
     queryKey: ["user-profile"],
     queryFn: () => fetchDashboardServiceCategories(token as string),
     enabled: !!token,
@@ -616,7 +653,7 @@ export const useGetDashboardServiceCategories = () => {
 export const useGetDashboardGeographicDistribution = () => {
   const { token } = useAuth();
 
-  return useQuery<userProfile, Error>({
+  return useQuery<any, Error>({
     queryKey: ["user-profile"],
     queryFn: () => fetchDashboardGeographicDistribution(token as string),
     enabled: !!token,
@@ -628,10 +665,125 @@ export const useGetDashboardGeographicDistribution = () => {
 export const useGetDashboardTopPerformingProviders = () => {
   const { token } = useAuth();
 
-  return useQuery<userProfile, Error>({
+  return useQuery<any, Error>({
     queryKey: ["user-profile"],
     queryFn: () => fetchDashboardTopPerformingProviders(token as string),
     enabled: !!token,
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+// Hook to get current admin profile
+export const useAdminProfile = () => {
+  const { token } = useAuth();
+
+  return useQuery({
+    queryKey: ["admin", "profile"],
+    queryFn: () => fetchAdminProfile(token as string),
+    enabled: !!token,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+};
+
+// ======== Update Notification call =========
+export const useUpdateNotificationPreferences = () => {
+  const { token } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (preferences: Partial<NotificationPreferencesType>) =>
+      updateNotificationPreferences(preferences, token),
+
+    onSuccess: (data) => {
+      // Optional: invalidate queries that might depend on this data
+      queryClient.invalidateQueries({ queryKey: ['notification-preferences'] });
+
+      toast.success('Notification preferences updated successfully');
+    },
+
+    onError: (error: any) => {
+      let errorMessage = 'Failed to update notification preferences';
+
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      toast.error(`Error: ${errorMessage}`);
+    },
+
+    onMutate: async (newPreferences) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ['notification-preferences'] });
+
+      // Snapshot the previous value
+      const previousPreferences = queryClient.getQueryData<NotificationPreferencesType>([
+        'notification-preferences',
+      ]);
+
+      // Optimistically update
+      queryClient.setQueryData(['notification-preferences'], (old: any) => ({
+        ...old,
+        ...newPreferences,
+      }));
+
+      // Return context with previous value for rollback on error
+      return { previousPreferences };
+    },
+
+    // If the mutation fails, roll back to the previous value
+    onSettled: (data, error, newPreferences, context) => {
+      if (error && context?.previousPreferences) {
+        queryClient.setQueryData(
+          ['notification-preferences'],
+          context.previousPreferences
+        );
+      }
+    },
+  });
+};
+
+// ========Fetch Notification preference =========
+export const useNotificationPreferences = () => {
+  const { token } = useAuth();
+
+  return useQuery<NotificationPreferencesType, Error>({
+    queryKey: ['notification-preferences'],
+    queryFn: () => fetchNotificationPreferences(token as string),
+    enabled: !!token, // only run when we have a token
+    staleTime: 1000 * 60 * 5, // 5 minutes - preferences don't change very often
+    gcTime: 1000 * 60 * 30,   // 30 minutes cache
+    retry: 1,                 // less aggressive retry than default
+  });
+};
+
+
+// =========== reset Notification ===========
+export const useResetNotificationPreferences = () => {
+  const { token } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => resetNotificationPreferences(token),
+
+    onSuccess: () => {
+      // Invalidate the preferences query so it refetches fresh (reset) values
+      queryClient.invalidateQueries({ queryKey: ['notification-preferences'] });
+
+      toast.success("Notification preferences reset to default successfully");
+    },
+
+    onError: (error: any) => {
+      let errorMessage = "Failed to reset notification preferences";
+
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      toast.error(`Error: ${errorMessage}`);
+    },
   });
 };

@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 
 type User = {
   email: string;
-  userType: "client" | "freelancer";
+  userType: "client" | "freelancer" | "admin";
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   kycVerificationStatus: string | null;
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem("authUser", JSON.stringify(userData));
 
     // Redirect based on userType
-    if (userData.userType === "client") {
+    if (userData.userType === "admin") {
       router.push("/dashboard");
     } else {
       //router.push("/freelancer-dashboard");
