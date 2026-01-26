@@ -10,8 +10,6 @@ import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "react-toastify";
 
 const Signin = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
 
   const [formData, setFormData] = useState({
     email: "",
@@ -130,7 +128,14 @@ const Signin = () => {
                 onChange={handleInputChange}
                 required
               />
-              <Link href="/dashboard">
+              <div className="flex justify-start items-center cursor-pointer mt-6 ml-15 md:ml-0">
+                 <CustomButton
+                  title={isPending ? "Signing in..." : "Continue with Whorkaz"}
+                  isLoading={isPending}
+                  disabled={isPending}
+                />
+              </div>
+              {/* <Link href="/dashboard">
                <div className="flex justify-start items-center cursor-pointer mt-6 ml-15 md:ml-0">
                  <CustomButton
                   title={isPending ? "Signing in..." : "Continue with Whorkaz"}
@@ -138,7 +143,7 @@ const Signin = () => {
                   disabled={isPending}
                 />
               </div>
-              </Link>
+              </Link> */}
              
               {/* <button
                 type="submit"

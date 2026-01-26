@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { 
   User, 
   Bell, 
@@ -7,16 +7,26 @@ import {
   Headphones, 
   BadgeCheck, 
   Pencil,
-  Plus 
 } from "lucide-react";
 import Header from "@/components/Header";
+import Image from "next/image";
+import { useUpdateNotificationPreferences, useNotificationPreferences, useResetNotificationPreferences } from "@/app/actions/reactQuery";
+import { NotificationPreferencesType } from "@/app/actions/type";
+import { useRouter } from "next/navigation"; 
+
 
 interface Field {
   label: string;
   value: string;
 }
 
-const Settings = () => {
+const SettingPage = () => {
+  const router = useRouter();
+  
+  const { mutate: updatePreferences, isPending } = useUpdateNotificationPreferences();
+  // const { data, isLoading, isError, error } = useNotificationPreferences();
+  const { mutate: resetServerPreferences, isPending: isResetting } = useResetNotificationPreferences();
+
   // Set default tab to 'platform-policies' for easy testing/previewing
   const [activeTab, setActiveTab] = useState('platform-policies'); 
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -29,31 +39,6 @@ const Settings = () => {
   ]);
   const [tempValues, setTempValues] = useState<{ [key: string]: string }>({});
 
-  // Preferences tab state (untouched from previous step)
-  const [adminAlerts, setAdminAlerts] = useState({
-    newUserRegistered: false,
-    kycPending: false,
-    newDispute: false,
-    paymentFailed: false,
-  });
-
-  const [adminNotificationType, setAdminNotificationType] = useState({
-    email: false,
-    inDashboard: false,
-  });
-
-  // Payments tab state (untouched from previous step)
-  const [paymentSettings, setPaymentSettings] = useState({
-    gateway: 'Paystack', // Active gateway
-    withdrawalCycle: 'Weekly',
-    commissionRate: '10%',
-    minWithdrawalAmount: '2000', // Stored as string, formatted for display
-  });
-
-  const availableGateways = ['Paystack', 'Stripe', 'Flutterwave'];
-  const withdrawalCycleOptions = ['Daily', 'Weekly', 'Bi-Weekly', 'Monthly'];
-  const commissionRateOptions = ['5%', '10%', '15%', '20%'];
-  
   // NEW: Platform Policies data
   const policyItems = [
     { name: 'Terms of Service', action: 'Edit/view' },
@@ -61,6 +46,7 @@ const Settings = () => {
     { name: 'Refund Policy', action: 'Edit/view' },
     { name: 'Community Guidelines', action: 'Edit/view' },
   ];
+
 
 
   // Handlers for Account Tab (untouched)
@@ -85,52 +71,125 @@ const Settings = () => {
     setTempValues({ ...tempValues, [label]: value });
   };
   
-  // Handlers for Preferences Tab (untouched)
-  const handleAlertChange = (key: string) => {
-    setAdminAlerts(prev => ({ ...prev, [key]: !prev[key as keyof typeof prev] }));
+ 
+
+  // State definitions (add these to your component)
+const [notificationPreferences, setNotificationPreferences] = useState({
+  jobStatus: { email: false, push: false },
+  messages: { email: false, push: false },
+  payments: { email: false, push: false },
+  announcements: { email: false, push: false },
+  accountActivity: { email: false, push: false }
+});
+
+// 1. State (single object - recommended)
+const [preferences, setPreferences] = useState<NotificationPreferencesType>({
+  jobStatusUpdates: { email: false, push: false },
+  newMessages: { email: false, push: false },
+  payments: { email: false, push: false },
+  announcements: { email: false, push: false },
+  accountActivity: { email: false, push: false },
+});
+
+
+  // Sync local state when server data arrives
+  // useEffect(() => {
+  //   if (data) {
+  //     setPreferences(data);
+  //   }
+  // }, [data]);
+
+  // 2. Separate change handlers — THIS IS THE KEY
+  const handleJobStatusChange = (channel: 'email' | 'push') => {
+    setPreferences(prev => ({
+      ...prev,
+      jobStatusUpdates: {
+        ...prev.jobStatusUpdates,
+        [channel]: !prev.jobStatusUpdates[channel]
+      }
+    }));
   };
 
-  const handleNotificationChange = (key: string) => {
-    setAdminNotificationType(prev => ({ ...prev, [key]: !prev[key as keyof typeof prev] }));
+  const handleNewMessagesChange = (channel: 'email' | 'push') => {
+    setPreferences(prev => ({
+      ...prev,
+      newMessages: {
+        ...prev.newMessages,
+        [channel]: !prev.newMessages[channel]
+      }
+    }));
   };
 
-  const resetPreferences = () => {
-    setAdminAlerts({
-      newUserRegistered: false,
-      kycPending: false,
-      newDispute: false,
-      paymentFailed: false,
+  const handlePaymentsChange = (channel: 'email' | 'push') => {
+    setPreferences(prev => ({
+      ...prev,
+      payments: {
+        ...prev.payments,
+        [channel]: !prev.payments[channel]
+      }
+    }));
+  };
+
+  const handleAnnouncementsChange = (channel: 'email' | 'push') => {
+    setPreferences(prev => ({
+      ...prev,
+      announcements: {
+        ...prev.announcements,
+        [channel]: !prev.announcements[channel]
+      }
+    }));
+  };
+
+  const handleAccountActivityChange = (channel: 'email' | 'push') => {
+    setPreferences(prev => ({
+      ...prev,
+      accountActivity: {
+        ...prev.accountActivity,
+        [channel]: !prev.accountActivity[channel]
+      }
+    }));
+  };
+
+  const handleReset = () => {
+    if (!confirm("Are you sure you want to reset all notification preferences to default?")) {
+      return;
+    }
+
+    // Reset in UI immediately (optimistic)
+    setNotificationPreferences({
+      jobStatus: { email: false, push: false },
+      messages: { email: false, push: false },
+      payments: { email: false, push: false },
+      announcements: { email: false, push: false },
+      accountActivity: { email: false, push: false }
     });
-    setAdminNotificationType({
-      email: false,
-      inDashboard: false,
-    });
+
+    // Then call API
+    resetServerPreferences();
+
+    router.push("/dashboard");
   };
 
   const savePreferences = () => {
-    console.log("Preferences saved:", {
-      adminAlerts,
-      adminNotificationType
-    });
-  };
-  
-  // Handlers for Payments Tab (untouched)
-  const handlePaymentChange = (key: keyof typeof paymentSettings, value: string) => {
-    setPaymentSettings(prev => ({ ...prev, [key]: value }));
+    // Save to API or localStorage
+    console.log('Saving preferences:', notificationPreferences);
+    updatePreferences(preferences);
+    
+    router.push("/dashboard");
+    // Your save logic here
   };
 
-  const resetPaymentSettings = () => {
-    setPaymentSettings({
-      gateway: 'Paystack',
-      withdrawalCycle: 'Weekly',
-      commissionRate: '10%',
-      minWithdrawalAmount: '2000',
-    });
-  };
+  // if (isLoading) {
+  //   return <div className="p-8 text-center">Loading your preferences...</div>;
+  // }
 
-  const savePaymentSettings = () => {
-    console.log("Payment Settings saved:", paymentSettings);
-  };
+  // if (isError) {
+  //   return (
+  //     <div className="p-8 text-center text-red-600">
+  //       Failed to load preferences: {error?.message}
+  //     </div>
+  //   );
+  // }
 
   // Tabs structure
   const tabs = [
@@ -189,8 +248,19 @@ const Settings = () => {
             </div>
           ))}
 
+          <div className="flex flex-row space-x-2 cursor-pointer">
+            <Image
+              src="/assets/icons/trash.png"
+              alt="Whorkaz Logo"
+              width={18}
+              height={18}
+              className="object-contain"
+            />
+            <h2 className="text-[14px] text-[#FF2929]">Delete Account</h2>
+          </div>
+
           {/* Side-by-side for Default currency and Time zone */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <label className="text-[14px] font-medium text-[#95959F]">Default currency & Time zone</label>
             <div className="flex space-x-6">
               {fields.slice(3).map((field) => (
@@ -234,7 +304,7 @@ const Settings = () => {
                 </div>
               ))}
             </div>
-          </div>
+          </div> */}
 
           <div className="flex justify-end mt-8">
             <button className="px-6 py-3 bg-[#3900DC] text-white rounded-full text-[16px] font-medium hover:bg-purple-700 transition-colors">
@@ -248,71 +318,221 @@ const Settings = () => {
     // 2. Preferences tab (untouched)
     if (activeTab === 'preferences') {
       return (
-        <div className=" md:ml-10 bg-gray-50 md:w-[600px] rounded-lg mt-5">
+        <div className="md:ml-10 bg-gray-50 md:w-[600px] rounded-lg mt-5">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold text-[#32323E] mb-6">Notification preferences</h2>
+            {/* Header */}
+            <h2 className="text-[24px] font-semibold text-[#32323E] mb-6">
+              Notification preferences
+            </h2>
 
-            {/* Admin Alerts Section */}
+            {/* Job Status Updates Section */}
             <div className="mb-8">
-              <h3 className="text-[15px] font-medium text-[#4B4B56] mb-4">Admin alerts</h3>
-              <div className="space-y-3">
-                {Object.entries(adminAlerts).map(([key, value]) => (
-                  <label key={key} className="flex items-center space-x-3">
+              <h3 className="text-[15px] font-medium text-[#4B4B56] mb-1">
+                Job Status Updates
+              </h3>
+              <div className="flex flex-row justify-between" >
+                <p className="text-[14px] text-[#95959F] mb-6 leading-relaxed w-[300px]">
+                  Know when someone applies, responds, or when your job status changes.
+                </p>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    
                     <input
                       type="checkbox"
-                      checked={value}
-                      onChange={() => handleAlertChange(key)}
-                      className="w-4 h-4 accent-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      checked={preferences.jobStatusUpdates.email}
+                      onChange={() => handleJobStatusChange('email')}
+                      className="w-4 h-4 text-[#3900DC] bg-white border-gray-300 rounded focus:ring-[#3900DC] focus:ring-2"
                     />
-                    <span className="text-[14px] text-[#4B4B56] capitalize">
-                      {key === 'newUserRegistered'
-                        ? 'New user registered'
-                        : key === 'kycPending'
-                        ? 'KYC pending'
-                        : key === 'newDispute'
-                        ? 'New dispute raised'
-                        : 'Payment failed'}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <hr className="border-gray-200 my-6" />
-
-            {/* Notification type section */}
-            <div className="mb-6">
-              <h3 className="text-[15px] font-medium text-[#4B4B56] mb-4">Admin alerts</h3>
-              <div className="space-y-3">
-                {Object.entries(adminNotificationType).map(([key, value]) => (
-                  <label key={key} className="flex items-center space-x-3">
+                    <span className="text-[14px] text-[#4B4B56]">Email</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    
                     <input
                       type="checkbox"
-                      checked={value}
-                      onChange={() => handleNotificationChange(key)}
-                      className="w-4 h-4 accent-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      checked={preferences.jobStatusUpdates.push}
+                      onChange={() => handleJobStatusChange('push')}
+                      className="w-4 h-4 text-[#3900DC] bg-white border-gray-300 rounded focus:ring-[#3900DC] focus:ring-2"
                     />
-                    <span className="text-[14px] text-[#4B4B56] capitalize">
-                      {key === 'email' ? 'Email' : 'In-dashboard alerts'}
-                    </span>
-                  </label>
-                ))}
+                    <span className="text-[14px] text-[#4B4B56]">Push</span>
+                  </div>
+                </div>
               </div>
+              
             </div>
 
-            <hr className="border-gray-200 my-6" />
+            <hr className="border-[#DBDBE3] my-6" />
 
-            {/* Buttons */}
-            <div className="flex justify-end space-x-4">
-              <button
+            {/* New Messages Section */}
+            <div className="mb-8">
+              <h3 className="text-[15px] font-medium text-[#4B4B56] mb-1">
+                New Messages
+              </h3>
+              <div className="flex flex-row justify-between" >
+                <p className="text-[14px] text-[#95959F] mb-6 leading-relaxed w-[300px]">
+                  Receive a message alert when someone contacts or replies to you.
+                </p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between space-x-3">
+                    
+                    <input
+                      type="checkbox"
+                      checked={preferences.newMessages.email}
+                      onChange={() => handleNewMessagesChange('email')}
+                      className="w-4 h-4 text-[#3900DC] bg-white border-gray-300 rounded focus:ring-[#3900DC] focus:ring-2"
+                    />
+                    <span className="text-[14px] text-[#4B4B56]">Email</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between space-x-3">
+                    
+                    <input
+                      type="checkbox"
+                      checked={preferences.newMessages.push}
+                      onChange={() => handleNewMessagesChange('push')}
+                      className="w-4 h-4 text-[#3900DC] bg-white border-gray-300 rounded focus:ring-[#3900DC] focus:ring-2"
+                    />
+                    <span className="text-[14px] text-[#4B4B56]">Push</span>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+
+            <hr className="border-[#DBDBE3] my-6" />
+
+            {/* Payments Section */}
+            <div className="mb-8">
+              <h3 className="text-[15px] font-medium text-[#4B4B56] mb-1">
+                Payments
+              </h3>
+              <div className="flex flex-row justify-between" >
+                <p className="text-[14px] text-[#95959F] mb-6 leading-relaxed w-[300px]">
+                  Be alerted when payments are received, made, or if there&apos;s a failed transaction.
+                </p>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={preferences.payments.email}
+                      onChange={() => handlePaymentsChange('email')}
+                      className="w-4 h-4 text-[#3900DC] bg-white border-gray-300 rounded focus:ring-[#3900DC] focus:ring-2"
+                    />
+                    <span className="text-[14px] text-[#4B4B56]">Email</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={preferences.payments.push}
+                      onChange={() => handlePaymentsChange('push')}
+                      className="w-4 h-4 text-[#3900DC] bg-white border-gray-300 rounded focus:ring-[#3900DC] focus:ring-2"
+                    />
+                    <span className="text-[14px] text-[#4B4B56]">Push</span>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+
+            <hr className="border-[#DBDBE3] my-6" />
+
+            {/* Announcements Section */}
+            <div className="mb-8">
+              <h3 className="text-[15px] font-medium text-[#4B4B56] mb-1">
+                Announcements
+              </h3>
+              <div className="flex flex-row justify-between" >
+                <p className="text-[14px] text-[#95959F] mb-6 leading-relaxed w-[300px]">
+                  Stay informed about new features, maintenance, and platform changes.
+                </p>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between space-x-3">
+                    
+                    <input
+                      type="checkbox"
+                      checked={preferences.announcements.email}
+                      onChange={() => handleAnnouncementsChange('email')}
+                      className="w-4 h-4 text-[#3900DC] bg-white border-gray-300 rounded focus:ring-[#3900DC] focus:ring-2"
+                    />
+                    <span className="text-[14px] text-[#4B4B56]">Email</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between space-x-3">
+                    
+                    <input
+                      type="checkbox"
+                      checked={preferences.announcements.push}
+                      onChange={() => handleAnnouncementsChange('push')}
+                      className="w-4 h-4 text-[#3900DC] bg-white border-gray-300 rounded focus:ring-[#3900DC] focus:ring-2"
+                    />
+                    <span className="text-[14px] text-[#4B4B56]">Push</span>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+
+            <hr className="border-[#DBDBE3] my-6" />
+
+            {/* Account Activity Section */}
+            <div className="mb-8">
+              <h3 className="text-[15px] font-medium text-[#4B4B56] mb-1">
+                Account Activity
+              </h3>
+              <div className="flex flex-row justify-between" >
+                <p className="text-[14px] text-[#95959F] mb-6 leading-relaxed w-[300px]">
+                  Be alerted for login from a new device, password change, or profile updates.
+                </p>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between space-x-3">
+                    
+                    <input
+                      type="checkbox"
+                      checked={preferences.accountActivity.email}
+                      onChange={() => handleAccountActivityChange('email')}
+                      className="w-4 h-4 text-[#3900DC] bg-white border-gray-300 rounded focus:ring-[#3900DC] focus:ring-2"
+                    />
+                    <span className="text-[14px] text-[#4B4B56]">Email</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between space-x-3">
+                   
+                    <input
+                      type="checkbox"
+                      checked={preferences.accountActivity.push}
+                      onChange={() => handleAccountActivityChange('push')}
+                      className="w-4 h-4 text-[#3900DC] bg-white border-gray-300 rounded focus:ring-[#3900DC] focus:ring-2"
+                    />
+                     <span className="text-[14px] text-[#4B4B56]">Push</span>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end items-center space-x-4 pt-4">
+              {/* <button
                 onClick={resetPreferences}
-                className="px-5 py-2.5 bg-gray-100 text-[#4B4B56] rounded-full text-[14px] font-medium hover:bg-gray-200 transition-colors"
+                className="px-6 py-3 bg-white border border-[#DBDBE3] text-[#4B4B56] rounded-full text-[14px] font-medium hover:bg-gray-50 transition-colors whitespace-nowrap"
               >
                 Reset to Default
+              </button> */}
+              <button
+                onClick={handleReset}
+                disabled={isResetting}
+                className="px-6 py-3 bg-white border border-[#DBDBE3] text-[#4B4B56] rounded-full text-[14px] font-medium hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-50 cursor-pointer"
+              >
+                {isResetting ? "Resetting..." : "Reset to Default"}
               </button>
               <button
                 onClick={savePreferences}
-                className="px-6 py-2.5 bg-[#3900DC] text-white rounded-full text-[14px] font-medium hover:bg-[#2E00B3] transition-colors"
+                className="px-8 py-3 bg-[#3900DC] text-white rounded-full text-[14px] font-medium hover:bg-[#2E00B3] transition-colors whitespace-nowrap"
               >
                 Save changes
               </button>
@@ -331,117 +551,75 @@ const Settings = () => {
             {/* Header */}
             <div className="mb-6">
               <h2 className="text-2xl font-semibold text-[#32323E]">Payment settings</h2>
-              <p className="text-[14px] text-[#95959F] mt-1">Configure how money flows through the platform.</p>
             </div>
 
             {/* Payment Gateway */}
-            <div className="space-y-4">
-              <label className="text-[16px] font-medium text-[#4B4B56] block">Payment Gateway</label>
-              <div className="flex flex-col gap-3 w-[150px] md:ml-47 md:-mt-10">
-                {availableGateways.map(gateway => {
-                  const isActive = paymentSettings.gateway === gateway;
-                  return (
-                    <button
-                      key={gateway}
-                      onClick={() => handlePaymentChange('gateway', gateway)}
-                      className={`flex items-center px-4 py-2 rounded-lg text-[14px] font-medium transition-colors border 
-                        ${isActive 
-                          ? 'bg-[#3900DC] text-white border-[#3900DC]' 
-                          : 'bg-white text-[#4B4B56] border-gray-300 hover:bg-gray-50'
-                        }`}
-                    >
-                      {/* Using the CreditCard icon or an initial letter mock icon */}
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      {gateway}
-                    </button>
-                  );
-                })}
-                <button
-                    onClick={() => console.log('Add Custom Gateway')}
-                    className="flex items-center px-4 py-2 rounded-lg text-[14px] font-medium transition-colors border border-dashed border-gray-400 text-gray-600 hover:bg-gray-50"
+            <div className="flex  ">
+              <div className=" py-3 w-full max-w-md">
+                {/* Payment Logos */}
+                <div className="flex space-x-10 mb-6">
+                  <Image src="/assets/icons/mastercard.png" alt="Mastercard" width={40} height={20} className="rounded" /> {/* Assume asset paths */}
+                  <Image src="/assets/icons/flutterwave.png" alt="Flutterwave" width={40} height={20} className="rounded" />
+                  <Image src="/assets/icons/paystack.png" alt="Paystack" width={40} height={20} className="rounded" />
+                  <Image src="/assets/icons/visa.png" alt="Visa" width={40} height={20} className="rounded" />
+                </div>
+        
+                {/* Form Fields */}
+                <form className="space-y-4">
+                  <div>
+                    <label className="block text-[14px] font-semibold text-[#4B4B56] mb-1">Cardholder name</label>
+                    <input
+                      type="text"
+                      placeholder="John Dortmund"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[14px] font-semibold text-[#4B4B56] mb-1">Card number</label>
+                    <input
+                      type="text"
+                      placeholder="0000 0000 0000"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div className="flex space-x-4">
+                    <div className="flex-1">
+                      <label className="block text-[14px] font-semibold text-[#4B4B56] mb-1">Expiry date</label>
+                      <input
+                        type="text"
+                        placeholder="MM/YY"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-[14px] font-semibold text-[#4B4B56] mb-1">CVV</label>
+                      <input
+                        type="text"
+                        placeholder="000"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                  </div>
+        
+                  {/* Checkbox */}
+                  <div className="flex items-center">
+                    <input type="checkbox" id="save-payment" className="mr-2" />
+                    <label htmlFor="save-payment" className="text-sm text-gray-500 text-center">
+                      Save my payment for future purchases
+                    </label>
+                  </div>
+        
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    className="flex item-center justify-center w-1/2 px-2 py-3 ml-auto bg-[#3900DC] text-white rounded-full font-bold hover:bg-purple-700 transition-colors cursor-pointer"
                   >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Custom
+                    Save payment details
                   </button>
-              </div>
-            </div>
-
-            {/* Withdrawal Cycle */}
-            <div className=" flex flex-row space-x-4 items-center">
-              <label htmlFor="withdrawal-cycle" className="text-[16px] font-medium text-[#4B4B56] block">Withdrawal Cycle</label>
-              <div className="relative w-full max-w-[200px]">
-                <select
-                  id="withdrawal-cycle"
-                  value={paymentSettings.withdrawalCycle}
-                  onChange={(e) => handlePaymentChange('withdrawalCycle', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-[16px] text-[#4B4B56] appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  {withdrawalCycleOptions.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Commission Rate */}
-            <div className="flex flex-row space-x-4 items-center">
-              <label htmlFor="commission-rate" className="text-[16px] font-medium text-[#4B4B56] block">Commission Rate</label>
-              <div className="relative w-full max-w-[200px]">
-                <select
-                  id="commission-rate"
-                  value={paymentSettings.commissionRate}
-                  onChange={(e) => handlePaymentChange('commissionRate', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-[16px] text-[#4B4B56] appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  {commissionRateOptions.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Minimum withdrawal amount */}
-            <div className="flex flex-row space-x-4 items-center">
-              <label htmlFor="min-withdrawal" className="text-[16px] font-medium text-[#4B4B56]">
-                Minimum
-                <span className="block text-[15px] font-medium text-[#4B4B56]">withdrawal amount</span>
-              </label>
-              <div className="relative w-full max-w-[200px]">
-                <input
-                  id="min-withdrawal"
-                  type="number"
-                  value={paymentSettings.minWithdrawalAmount}
-                  onChange={(e) => handlePaymentChange('minWithdrawalAmount', e.target.value)}
-                  className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg text-[16px] text-[#4B4B56] focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="2000"
-                />
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[#4B4B56] text-[16px]">
-                  ₦
-                </span>
+                </form>
               </div>
             </div>
             
-            {/* Buttons */}
-            <div className="flex justify-end space-x-4 pt-4">
-              <button
-                onClick={resetPaymentSettings}
-                className="px-5 py-2.5 bg-gray-100 text-[#4B4B56] rounded-full text-[14px] font-medium hover:bg-gray-200 transition-colors"
-              >
-                Reset to Default
-              </button>
-              <button
-                onClick={savePaymentSettings}
-                className="px-6 py-2.5 bg-[#3900DC] text-white rounded-full text-[14px] font-medium hover:bg-purple-700 transition-colors"
-              >
-                Save changes
-              </button>
-            </div>
           </div>
         </div>
       );
@@ -522,4 +700,4 @@ const Settings = () => {
   );
 };
 
-export default Settings;
+export default SettingPage;

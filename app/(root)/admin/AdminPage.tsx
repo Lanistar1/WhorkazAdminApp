@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
@@ -6,7 +7,9 @@ import Table from "@/components/Table";
 import Header from "@/components/Header";
 import { Search, Download } from "lucide-react";
 
-import { useGetUsers } from "@/app/actions/reactQuery"; // ← adjust path if needed
+import { useDeleteAdmin, useGetAdmin, useGetUsers } from "@/app/actions/reactQuery"; // ← adjust path if needed
+import { AdminUser } from "@/app/actions/type";
+import Link from "next/link";
 // import { useAuth } from wherever your auth context/hook is
 
 interface TableColumn {
@@ -28,6 +31,16 @@ const getStatusClass = (status: string) => {
   }
 };
 
+interface DisplayAdmin {
+  id: string;
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  userType?: string;
+  status?: string;
+  createdAt?: string;
+  [key: string]: any;
+}
 
 interface DisplayUser {
   id: string;
@@ -41,28 +54,48 @@ interface DisplayUser {
   [key: string]: any;
 }
 
-const UserManagement = () => {
+const AdminPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
 
   const { 
-    data, 
-    isLoading, 
-    isError, 
-    error 
-  } = useGetUsers({
-    keyword:   searchTerm.trim() || undefined,
-    status:    filterStatus === "all" ? undefined : filterStatus,
-    // role:   "admin",          
-  });
+  data: response, 
+  isLoading, 
+  isError, 
+  error 
+} = useGetAdmin();
 
-  const users = data?.users ?? [] as DisplayUser[];
+// Extract admins safely
+const admins: AdminUser[] = useMemo(() => {
+  return response?.data?.users ?? [];
+}, [response]);
+
+// ======== delete Admin ===========
+const deleteAdminMutation = useDeleteAdmin();
+
+// Debug logs (remove after confirming)
+console.log("Full admin response:", response);
+console.log("Extracted admins:", admins);
+
+// Filtering (now type-safe)
+const filteredAdmins = admins.filter(admin => {
+  if (filterStatus === "all") return true;
+  return admin.status?.toLowerCase() === filterStatus.toLowerCase();
+});
+
+// Table data (type-safe)
+const tableData: AdminUser[] = filterStatus === "all" 
+  ? filteredAdmins 
+  : filteredAdmins.filter(admin => admin.status?.toLowerCase() === filterStatus.toLowerCase());
+
+
+
   // Client-side search (only if your API doesn't support keyword filtering)
-  const filteredUsers = users.filter(user => {
-    if (filterStatus === "all") return true;
-    return user.status?.toLowerCase() === filterStatus.toLowerCase();
-  });
+//   const filteredAdmins = admins.filter(admin => {
+//   if (filterStatus === "all") return true;
+//   return admin.status?.toLowerCase() === filterStatus.toLowerCase();
+// });
 
 
   if (isLoading) {
@@ -76,12 +109,6 @@ const UserManagement = () => {
       </div>
     );
   }
-
-  // Final data to show in table
-  const tableData = filterStatus === "all" 
-    ? filteredUsers 
-    : filteredUsers.filter(u => u.status?.toLowerCase() === filterStatus.toLowerCase());
-
 
 
   const userColumns: TableColumn[] = [
@@ -139,12 +166,35 @@ const UserManagement = () => {
     },
   ];
 
-  const handleAction = (item: User, action: string) => {
-    console.log(`Action: ${action} on user`, item);
-    // Example: router.push(`/admin/users/${item.id}`);
-    // or open modal, call delete API, etc.
-  };
+    // ==  deleting admin ======
+    const handleAction = (item: AdminUser, action: string) => {
+        console.log(`Action: ${action} on admin`, item);
 
+        if (action === "delete") {
+            // Show a confirmation before deleting
+            if (window.confirm(`Are you sure you want to delete admin "${item.firstName || item.email}"? This cannot be undone.`)) {
+            // Trigger the delete mutation with the admin's ID
+            deleteAdminMutation.mutate(item.id, {
+                onSuccess: () => {
+                console.log("Admin deleted successfully");
+                // The mutation already invalidates the query → table will auto-refresh
+                },
+                onError: (err) => {
+                console.error("Delete failed:", err);
+                // Optional: toast.error("Failed to delete admin")
+                },
+            });
+            }
+        } else {
+            // Handle other actions (view, edit) if needed
+            console.log(`Unhandled action: ${action}`);
+        }
+
+        // Do NOT close modal here — let the table component handle it after action
+        // closeModal();  ← REMOVE or COMMENT this line if it's here
+    };
+
+  //======== export file ==========
   const exportToCSV = () => {
     if (tableData.length === 0) return;
 
@@ -174,7 +224,7 @@ const UserManagement = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-white text-gray-900">
-      <Header title="User Management" />
+      <Header title="Admin Management" />
 
       <div className="p-6">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
@@ -211,6 +261,13 @@ const UserManagement = () => {
               <Download className="h-5 w-5" />
               Export CSV
             </button>
+            <Link href="/admin/new-admin">
+              <button
+                className="bg-[#3900DC] cursor-pointer text-white font-semibold rounded-[32px] w-[80px] py-2  px-5 flex items-center justify-center hover:opacity-90 transition"
+              >
+                New
+              </button>
+            </Link>
           </div>
         </div>
 
@@ -228,12 +285,12 @@ const UserManagement = () => {
         )}
 
         {!isLoading && !isError && (
-          <Table 
-            columns={userColumns} 
-            data={tableData} 
-            onAction={handleAction} 
-            // isLoading={isLoading}   ← pass if your Table supports skeleton/loading state
-          />
+          <Table
+            columns={userColumns as any}  // ← safe assertion
+            data={tableData as any}       // ← safe assertion
+            onAction={handleAction as any} // ← safe assertion (optional, but fixes the onAction mismatch)
+            // isLoading={isLoading}      // if your Table supports it
+            />
         )}
 
         {!isLoading && !isError && tableData.length === 0 && (
@@ -246,4 +303,4 @@ const UserManagement = () => {
   );
 };
 
-export default UserManagement;
+export default AdminPage;

@@ -53,17 +53,33 @@ const Table = <T extends TableItem>({
     setSelectedItem(null);
   };
 
+  // useEffect(() => {
+  //   const handleClickOutside = (event: MouseEvent) => {
+  //     if (iconRef.current && !iconRef.current.contains(event.target as Node)) {
+  //       setIsModalOpen(false);
+  //     }
+  //   };
+  //   document.addEventListener("mousedown", handleClickOutside);
+  //   return () => document.removeEventListener("mousedown", handleClickOutside);
+  // }, []);
+
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (iconRef.current && !iconRef.current.contains(event.target as Node)) {
-        setIsModalOpen(false);
-      }
-    };
+  const handleClickOutside = (event: MouseEvent) => {
+    const modal = document.querySelector('.fixed.bg-white.border'); // or add ref to modal div
+    if (modal && !modal.contains(event.target as Node) && 
+        iconRef.current && !iconRef.current.contains(event.target as Node)) {
+      setIsModalOpen(false);
+    }
+  };
+
+  if (isModalOpen) {
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, [isModalOpen]);
 
   const handleAction = (action: string) => {
+    console.log("Table modal action clicked:", action, selectedItem); // ← add this
     if (selectedItem && onAction) {
       onAction(selectedItem, action);
     }
@@ -122,19 +138,30 @@ const Table = <T extends TableItem>({
           <ul className="text-[14px] font-medium text-[#4B4B56]">
             <li
               className="px-4 py-2 text-[16px] font-semibold text-[#4B4B56] hover:bg-gray-100 rounded-t-[8px] cursor-pointer"
-              onClick={() => handleAction("view")}
+              onClick={(e) => {
+                e.stopPropagation(); // ← ADD THIS
+                handleAction("view");
+              }}
             >
               View Details
             </li>
+
             <li
               className="px-4 py-2 hover:bg-gray-100 text-[16px] font-semibold text-[#4B4B56] cursor-pointer"
-              onClick={() => handleAction("edit")}
+              onClick={(e) => {
+                e.stopPropagation(); // ← ADD THIS
+                handleAction("edit");
+              }}
             >
               Edit
             </li>
+
             <li
               className="px-4 py-2 text-[16px] font-semibold text-[#FF2929] hover:bg-gray-100 rounded-b-[8px] cursor-pointer"
-              onClick={() => handleAction("delete")}
+              onClick={(e) => {
+                e.stopPropagation(); // ← ADD THIS
+                handleAction("delete");
+              }}
             >
               Delete
             </li>
