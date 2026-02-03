@@ -124,6 +124,8 @@ export const Navbar = () => {
         { name: 'Dashboard', icon: <DashboardIcon />, link: '/dashboard' },
         { name: 'User Management', icon: <JobsIcon />, link: '/user-management' },
         { name: 'Admin Management', icon: <JobsIcon />, link: '/admin' },
+        { name: 'Category Management', icon: <JobsIcon />, link: '/category' },
+        { name: 'Services Management', icon: <JobsIcon />, link: '/services' },
         { name: 'KYC & Verification', icon: <DiscoverIcon />, link: '/kyc-verification' },
         { name: 'Dispute Center', icon: <CoursesIcon />, link: '/dispute-center' },
         { name: 'Reports & Analytics', icon: <MessagesIcon />, link: '/reports' },

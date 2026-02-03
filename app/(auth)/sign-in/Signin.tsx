@@ -154,12 +154,12 @@ const Signin = () => {
             </form>
 
             {/* Login Link */}
-            <div className="flex justify-start items-center mb-3 mt-2 gap-2 ml-20 md:ml-0">
+            {/* <div className="flex justify-start items-center mb-3 mt-2 gap-2 ml-20 md:ml-0">
               <p className=" text-start text-sm text-gray-600 dark:text-gray-400">Don’t have an account?</p>
               <Link href="/sign-up">
                 <p className=" cursor-pointer text-[#3900DC] dark:text-[#4A00F4] hover:underline font-semibold">Sign up</p> 
               </Link>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

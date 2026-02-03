@@ -3,8 +3,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { toast } from "react-toastify";
-import { approveCourse, createAdmin, createCategory, createOnlineCourse, createPhysicalCourse, createService, deleteAdminById, deleteCategoryById, deleteServiceById, fetchAdmin, fetchAdminActivity, fetchAdminById, fetchAdminProfile, fetchCategory, fetchCategoryById, fetchCourseById, fetchCourses, fetchDashboardGeographicDistribution, fetchDashboardMetric, fetchDashboardRevenueTrends, fetchDashboardServiceCategories, fetchDashboardTopPerformingProviders, fetchDashboardUserGrowth, fetchNotificationPreferences, fetchService, fetchServiceById, fetchUserById, fetchUsers, rejectCourse, resetNotificationPreferences, signIn, updateAdminProfile, updateCategory, updateCourse, updateNotificationPreferences, updateService, updateUserProfile, updateUserStatus, userBanStatus } from "./api";
-import { Admin_Query_Keys, AdminUsersResponse, approveCoursetype, CourseDetail, createAdminType, createCategoryType, createServiceType, DashboardMetrics, GetCoursesResponse, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedUsers, rejectCoursetype, updateCategoryType, updateCoursetype, updateServiceType, updateUserProfileType, updateUserStatusType, userBanStatusUpdateType, userProfile } from "./type";
+import { approveCourse, approveKYC, createAdmin, createCategory, createOnlineCourse, createPhysicalCourse, createService, declineKYC, deleteAdminById, deleteCategoryById, deleteServiceById, disputeMessage, exportAnalyticReport, fetchAdmin, fetchAdminActivity, fetchAdminById, fetchAdminProfile, fetchCategory, fetchCategoryById, fetchCourseById, fetchCourses, fetchDashboardGeographicDistribution, fetchDashboardMetric, fetchDashboardRevenueTrends, fetchDashboardServiceCategories, fetchDashboardTopPerformingProviders, fetchDashboardUserGrowth, fetchDisbuteDetailById, fetchDisbuteList, fetchKYCDetailById, fetchNotificationPreferences, fetchPendingKYC, fetchRevenueAnalysis, fetchService, fetchServiceAnalysis, fetchServiceById, fetchTransactionDetailById, fetchTransactionList, fetchUserAnalysis, fetchUserById, fetchUsers, fetchWalletDetailById, fetchWalletList, rejectCourse, resetNotificationPreferences, resolveDispute, signIn, updateAdminProfile, updateCategory, updateCourse, updateKYCDoc, updateNotificationPreferences, updateService, updateUserProfile, updateUserStatus, userBanStatus } from "./api";
+import { addDisbuteMessageType, Admin_Query_Keys, AdminUsersResponse, approveCoursetype, approveKYCType, CourseDetail, createAdminType, createCategoryType, createServiceType, DashboardMetrics, GetCoursesResponse, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalytics, RevenueAnalyticsData, RevenueAnalyticsResponse, Service, ServiceAnalytics, updateCategoryType, updateCoursetype, updateDocVerificationType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalytics, UserAnalyticsData, UserAnalyticsResponse, userBanStatusUpdateType, userProfile } from "./type";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
@@ -500,16 +500,33 @@ export const useDeleteCategory = () => {
 };
 
 //=====fetching services ========
+// export const useGetService = () => {
+//   const { token } = useAuth();
+
+//   return useQuery<createServiceType[], Error>({
+//     queryKey: ["services"],
+//     queryFn: async () => {
+//       const res = await fetchService(token as string);
+//       // ensure it's always an array
+//       return Array.isArray(res) ? res : [];
+//     },
+//     enabled: !!token,
+//     staleTime: 5 * 60 * 1000,
+//   });
+// };
+
 export const useGetService = () => {
   const { token } = useAuth();
 
-  return useQuery<userProfile, Error>({
-    queryKey: ["user-profile"],
+  return useQuery<Service[], Error>({
+    queryKey: ["services"],
     queryFn: () => fetchService(token as string),
     enabled: !!token,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 };
+
+
 
 
 //=====fetching service detail ========
@@ -758,7 +775,6 @@ export const useNotificationPreferences = () => {
   });
 };
 
-
 // =========== reset Notification ===========
 export const useResetNotificationPreferences = () => {
   const { token } = useAuth();
@@ -785,5 +801,331 @@ export const useResetNotificationPreferences = () => {
 
       toast.error(`Error: ${errorMessage}`);
     },
+  });
+};
+
+
+//=====fetching pending KYC ========
+// export const useGetPendingKYC = (
+//     filters: {
+//     status?: string;
+//     priority?: string;
+//     keyword?: string;
+//   } = {}
+// ) => {
+//   const { token } = useAuth();
+
+//   return useQuery<any, Error>({
+//     queryKey: ["user-profile", filters],
+//     queryFn: () => fetchPendingKYC(token as string),
+//     enabled: !!token,
+//     staleTime: 5 * 60 * 1000, // 5 minutes
+//   });
+// };
+
+export const useGetPendingKYC = (
+  filters: { status?: string; priority?: string; keyword?: string; page?: number; limit?: number } = {}
+) => {
+  const { token } = useAuth();
+
+  return useQuery<PaginatedKYCResponse, Error>({
+    queryKey: ["user-profile", filters],
+    queryFn: () => fetchPendingKYC(token as string, filters),
+    enabled: !!token,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+
+
+
+//=====fetching KYC details========
+export const useGetKYCDetail = (id: string, token: string) => {
+  return useQuery<userProfile, Error>({ // Added type for useQuery
+    queryKey: [Admin_Query_Keys.Admin_ID, id],
+    queryFn: () => fetchKYCDetailById(id, token),
+    enabled: !!id && !!token, // Ensure it only runs if both are available
+  });
+};
+
+//======== approve KYC ================
+export const useApproveKYC= () => {
+  const { token } = useAuth();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: approveKYCType }) =>
+      approveKYC(data, token, id),
+    onSuccess: () => {
+      toast.success("KYC approved successfully");
+      // Optional: invalidate courses list query to refresh
+      // queryClient.invalidateQueries({ queryKey: ["courses", "list"] });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Error approving course"
+      );
+    },
+  });
+};
+
+//======== decline KYC ================
+export const useDeclineKYC= () => {
+  const { token } = useAuth();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: rejectKYCType }) =>
+      declineKYC(data, token, id),
+    onSuccess: () => {
+      toast.success("KYC decline successfully");
+      // Optional: invalidate courses list query to refresh
+      // queryClient.invalidateQueries({ queryKey: ["courses", "list"] });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Error approving course"
+      );
+    },
+  });
+};
+
+//======== update KYC Doc ================
+export const useUpdateKYCDoc= () => {
+  const { token } = useAuth();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: updateDocVerificationType }) =>
+      updateKYCDoc(data, token, id),
+    onSuccess: () => {
+      toast.success("KYC document updated successfully");
+      // Optional: invalidate courses list query to refresh
+      // queryClient.invalidateQueries({ queryKey: ["courses", "list"] });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Error approving course"
+      );
+    },
+  });
+};
+
+//=====fetching disbute list ========
+export const useGetDisbute = (
+    filters: {
+    status?: string;
+    priority?: string;
+    type?: string;
+  } = {}
+) => {
+  const { token } = useAuth();
+
+  return useQuery<any, Error>({
+    queryKey: ["user-profile", filters],
+    queryFn: () => fetchDisbuteList(token as string),
+    enabled: !!token,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+//=====fetching disbute detail========
+export const useGetDisbuteDetail = (id: string, token: string) => {
+  return useQuery<userProfile, Error>({ // Added type for useQuery
+    queryKey: [Admin_Query_Keys.Admin_ID, id],
+    queryFn: () => fetchDisbuteDetailById(id, token),
+    enabled: !!id && !!token, // Ensure it only runs if both are available
+  });
+};
+
+//======== add dispute message ================
+export const useAddDisputeMessage= () => {
+  const { token } = useAuth();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: addDisbuteMessageType }) =>
+      disputeMessage(data, token, id),
+    onSuccess: () => {
+      toast.success("Dispute Message added successfully");
+      // Optional: invalidate courses list query to refresh
+      // queryClient.invalidateQueries({ queryKey: ["courses", "list"] });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Error adding dispute message"
+      );
+    },
+  });
+};
+
+
+//======== resolve dispute ================
+export const useResolveDispute= () => {
+  const { token } = useAuth();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: resolveDisbuteType }) =>
+      resolveDispute(data, token, id),
+    onSuccess: () => {
+      toast.success("Dispute resolved successfully");
+      // Optional: invalidate courses list query to refresh
+      // queryClient.invalidateQueries({ queryKey: ["courses", "list"] });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Error resolving dispute "
+      );
+    },
+  });
+};
+
+
+// //=====fetching user analysis ========
+// export const useGetUserAnalysis = (
+//     filters: {
+//     status?: string;
+//     period?: string;
+//     groupBy?: string;
+//   } = {}
+// ) => {
+//   const { token } = useAuth();
+
+//   return useQuery<any, Error>({
+//     queryKey: ["user-profile", filters],
+//     queryFn: () => fetchUserAnalysis(token as string),
+//     enabled: !!token,
+//     staleTime: 5 * 60 * 1000, // 5 minutes
+//   });
+// };
+
+// //=====fetching revenue analysis ========
+// export const useGetRevenueAnalysis = (
+//     filters: {
+//     status?: string;
+//     period?: string;
+//     groupBy?: string;
+//   } = {}
+// ) => {
+//   const { token } = useAuth();
+
+//   return useQuery<any, Error>({
+//     queryKey: ["user-profile", filters],
+//     queryFn: () => fetchRevenueAnalysis(token as string),
+//     enabled: !!token,
+//     staleTime: 5 * 60 * 1000, // 5 minutes
+//   });
+// };
+
+// //=====fetching service analysis ========
+// export const useGetServiceAnalysis = (
+//     filters: {
+//     status?: string;
+//     period?: string;
+//     groupBy?: string;
+//   } = {}
+// ) => {
+//   const { token } = useAuth();
+
+//   return useQuery<any, Error>({
+//     queryKey: ["user-profile", filters],
+//     queryFn: () => fetchServiceAnalysis(token as string),
+//     enabled: !!token,
+//     staleTime: 5 * 60 * 1000, // 5 minutes
+//   });
+// };
+
+export const useUserAnalytics = () => {
+  const { token } = useAuth();
+
+  return useQuery<UserAnalyticsData, Error>({
+    queryKey: ["analytics", "users"],
+    queryFn: () => fetchUserAnalysis(token as string),
+    enabled: !!token,
+  });
+};
+
+export const useRevenueAnalytics = () => {
+  const { token } = useAuth();
+
+  return useQuery<RevenueAnalyticsData, Error>({
+    queryKey: ["analytics", "revenue"],
+    queryFn: () => fetchRevenueAnalysis(token as string),
+    enabled: !!token,
+  });
+};
+
+export const useGetServiceAnalysis = () => {
+  const { token } = useAuth();
+
+  return useQuery<ServiceAnalytics, Error>({
+    queryKey: ["analytics", "services"],
+    queryFn: () => fetchServiceAnalysis(token as string),
+    enabled: !!token,
+  });
+};
+
+
+
+//=====export analysis report ========
+export const useExportAnalyticReport = (
+    filters: {
+    status?: string;
+    period?: string;
+    groupBy?: string;
+  } = {}
+) => {
+  const { token } = useAuth();
+
+  return useQuery<any, Error>({
+    queryKey: ["user-profile", filters],
+    queryFn: () => exportAnalyticReport(token as string),
+    enabled: !!token,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+//=====fetching transaction list ========
+export const useGetTransactionList = (params: {
+  page: number;
+  limit: number;
+  status?: string;
+}) => {
+  const { token } = useAuth();
+
+  return useQuery<PaginatedPaymentsResponse, Error>({
+    queryKey: ['admin-transactions', params],
+    queryFn: () => fetchTransactionList(token as string, params),
+    enabled: !!token,
+    keepPreviousData: true,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+
+//=====fetching transaction detail ========
+export const useGetTransactionDetail = (id: string, token: string) => {
+  return useQuery<userProfile, Error>({ // Added type for useQuery
+    queryKey: [Admin_Query_Keys.Admin_ID, id],
+    queryFn: () => fetchTransactionDetailById(id, token),
+    enabled: !!id && !!token, // Ensure it only runs if both are available
+  });
+};
+
+//=====fetching wallet list ========
+export const useGetWalletList = (
+    filters: {
+    status?: string;
+    period?: string;
+    groupBy?: string;
+  } = {}
+) => {
+  const { token } = useAuth();
+
+  return useQuery<any, Error>({
+    queryKey: ["user-profile", filters],
+    queryFn: () => fetchWalletList(token as string),
+    enabled: !!token,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+//=====fetching wallet detail ========
+export const useGetWalletDetail = (id: string, token: string) => {
+  return useQuery<userProfile, Error>({ // Added type for useQuery
+    queryKey: [Admin_Query_Keys.Admin_ID, id],
+    queryFn: () => fetchWalletDetailById(id, token),
+    enabled: !!id && !!token, // Ensure it only runs if both are available
   });
 };

@@ -104,7 +104,7 @@ export type createCategoryType = {
   name: string;
   description: string;
   type: string;
-  parentId: string;
+  parentId: null;
   isActive: boolean;
 };
 
@@ -443,3 +443,259 @@ export interface NotificationPreferencesType {
     push: boolean;
   };
 }
+
+//==========approve KYC ========
+export type approveKYCType = {
+  verification_notes: string;
+  badge_level: string;
+};
+
+//==========reject KYC ========
+export type rejectKYCType = {
+  reason: string;
+  rejection_notes: string;
+  allow_resubmission: boolean;
+};
+
+//==========update document verification status ========
+export type updateDocVerificationType = {
+  verified: boolean;
+  verification_notes: string;
+};
+
+//========== add dispute message ========
+export type addDisbuteMessageType = {
+  message: string;
+  internal_only: boolean;
+};
+
+//========== resolve dispute ========
+export type resolveDisbuteType = {
+  resolution_type: string;
+  resolution_details: string;
+  refund_amount: number;
+  admin_notes: string;
+};
+
+//========== process refund ========
+export type precessRefundType = {
+  reason: string;
+  amount: number;
+  dispute_id: string;
+};
+
+//========== adjust wallet ========
+export type adjustWalletType = {
+  reason: string;
+  amount: number;
+  reference: string;
+  admin_id: string;
+};
+
+//========== release order payout ========
+export type releaseOrderPayoutType = {
+  reason: string;
+  amount: number;
+  reference: string;
+  admin_id: string;
+};
+
+
+
+//========== get payment typescript ============
+export type PaymentStatus = 'pending' | 'successful' | 'failed' | 'refund';
+
+export interface Payer {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  userType: 'client' | 'provider';
+}
+
+export interface Job {
+  id: string;
+  title: string;
+  budget: string;
+}
+
+export interface Payment {
+  id: string;
+  reference: string;
+  amount: string;
+  currency: string;
+  status: PaymentStatus;
+  provider: string;
+  contextType: string;
+  contextId: string;
+  createdAt: string;
+  updatedAt: string;
+  payer: Payer;
+  job: Job;
+}
+
+export interface PaymentSummary {
+  totalAmount: string;
+  totalTransactions: number;
+  successfulPayments: number;
+  failedPayments: number;
+  refundedAmount: number;
+}
+
+export interface PaginatedPaymentsResponse {
+  payments: Payment[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  summary: PaymentSummary;
+}
+
+export interface PaymentsAPIResponse {
+  success: boolean;
+  message: string;
+  data: PaginatedPaymentsResponse;
+}
+
+
+
+//========== get KYC typescript ============
+export type KYCStatus = 'approve' | 'reject' | 'resubmit';
+
+export interface KYCItem {
+  id: string | number;
+  name: string;
+  doc: string;
+  role: string;
+  status: KYCStatus;
+  date: string;
+}
+
+export interface PaginatedKYCResponse {
+  users: KYCItem[];
+  page: number;
+  limit: number;
+  totalPages: number;
+  total: number;
+}
+
+
+// ============= typescript for report and analysis ==========
+// ===== analytics types =====
+
+export interface UserAnalytics {
+  verifiedWorkmen: number;
+  activeClients: number;
+  jobsCompleted: number;
+  openDisputes: number;
+  avgCompletionDays: number;
+}
+
+export interface RevenueAnalytics {
+  labels: string[];
+  values: number[];
+}
+
+export interface ServiceAnalytics {
+  labels: string[];
+  completedJobs: number[];
+  disputeStats: {
+    settled: number;
+    unsettled: number;
+  };
+  topProviders: {
+    id: string;
+    providerName: string;
+    category: string;
+    jobsCompleted: number;
+    rating: string;
+    joined: string;
+  }[];
+}
+
+
+//  ========== Users Analytics ============
+export interface UserGrowthTrend {
+  date: string;
+  total_users: number;
+  new_registrations: number;
+}
+
+export interface UserGeoDistribution {
+  location: string;
+  user_count: number;
+  percentage: number;
+}
+
+export interface UserAnalyticsData {
+  total_users: number;
+  active_users: number;
+  new_registrations: number;
+  user_types: {
+    workman: number;
+    client: number;
+    admin: number;
+  };
+  growth_trend: UserGrowthTrend[];
+  geographic_distribution: UserGeoDistribution[];
+}
+
+export interface UserAnalyticsResponse {
+  success: boolean;
+  message: string;
+  data: UserAnalyticsData;
+}
+
+//  ========== Revenue Analytics ============
+export interface RevenueByCategory {
+  category: string;
+  revenue: number;
+  percentage: number;
+}
+
+export interface MonthlyRevenueTrend {
+  month: string;
+  revenue: number;
+  transactions: number;
+}
+
+export interface RevenueAnalyticsData {
+  total_revenue: number;
+  platform_fees: number;
+  transactions_count: number;
+  average_transaction: number;
+  revenue_by_category: RevenueByCategory[];
+  monthly_trend: MonthlyRevenueTrend[];
+}
+
+export interface RevenueAnalyticsResponse {
+  success: boolean;
+  message: string;
+  data: RevenueAnalyticsData;
+}
+
+
+
+// ============ types/service.ts =============
+
+// Single service item
+export type Service = {
+  id: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+// The "data" object returned by the API
+export type ServiceData = {
+  services: Service[];
+};
+
+// Full API response
+export type ServiceApiResponse = {
+  success: boolean;
+  message: string;
+  data: ServiceData;
+};

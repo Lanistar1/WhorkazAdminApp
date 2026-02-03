@@ -27,7 +27,7 @@ const NewAdmin = () => {
     password: "",
     firstName: "",
     lastName: "",
-    role: "admin", // default to "admin" since this is admin creation
+    role: "", // default to "admin" since this is admin creation
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -59,7 +59,7 @@ const NewAdmin = () => {
         password: "",
         firstName: "",
         lastName: "",
-        role: "admin",
+        role: "",
       });
       
       // Redirect to admin list or dashboard
@@ -141,6 +141,10 @@ const NewAdmin = () => {
               required
             >
               <option value="admin">Admin</option>
+              <option value="⁠COO (Chief Operating Officer)">⁠COO (Chief Operating Officer)</option>
+              <option value="Finance & Admin Manager">Finance & Admin Manager</option>
+              <option value="⁠Customer Support / Quality Control">⁠Customer Support / Quality Control</option>
+              <option value="⁠Growth Development & AI Lead">⁠Growth Development & AI Lead</option>
               {/* Add more roles if backend supports them later */}
             </select>
           </div>
