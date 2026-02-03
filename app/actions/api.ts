@@ -1,5 +1,5 @@
 import axios from "axios";
-import { AdminUsersResponse, approveCoursetype, CourseDetailResponse, createAdminType, createCategoryType, CreateOnlineCoursePayload, CreatePhysicalCoursePayload, createServiceType, DashboardMetrics, GetCoursesResponse, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedUsers, rejectCoursetype, updateCategoryType, updateCoursetype, updateServiceType, updateUserProfileType, updateUserStatusType, userBanStatusUpdateType, userProfile } from "./type";
+import { addDisbuteMessageType, AdminUsersResponse, approveCoursetype, approveKYCType, CourseDetailResponse, createAdminType, createCategoryType, CreateOnlineCoursePayload, CreatePhysicalCoursePayload, createServiceType, DashboardMetrics, GetCoursesResponse, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalytics, RevenueAnalyticsData, RevenueAnalyticsResponse, Service, ServiceAnalytics, ServiceApiResponse, updateCategoryType, updateCoursetype, updateDocVerificationType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalytics, UserAnalyticsData, UserAnalyticsResponse, userBanStatusUpdateType, userProfile } from "./type";
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -209,7 +209,7 @@ export const fetchCourseById = async (id: string, token: string) => {
 
 //======== approve course ================
 export const approveCourse = async (data: approveCoursetype, token: string | null, id: string) => {
-  const res = await axios.patch(`${apiUrl}/api/v1/admin/courses/${id}/approve`, data, {
+  const res = await axios.post(`${apiUrl}/api/v1/admin/courses/${id}/approve`, data, {
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
@@ -220,7 +220,7 @@ export const approveCourse = async (data: approveCoursetype, token: string | nul
 
 //======== reject course ================
 export const rejectCourse = async (data: rejectCoursetype, token: string | null, id: string) => {
-  const res = await axios.patch(`${apiUrl}/api/v1/admin/courses/${id}/reject`, data, {
+  const res = await axios.post(`${apiUrl}/api/v1/admin/courses/${id}/reject`, data, {
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
@@ -350,14 +350,27 @@ export const deleteCategoryById = async (id: string, token: string): Promise<voi
 
 
 //=====fetching services ========
-export const fetchService = async (token: string): Promise<userProfile> => {
-  const response = await axios.get(`${apiUrl}/api/v1/admin/lookups/services`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return response.data.data; 
+// export const fetchService = async (token: string): Promise<createServiceType[]> => {
+//   const response = await axios.get(`${apiUrl}/api/v1/admin/lookups/services`, {
+//     headers: { Authorization: `Bearer ${token}` },
+//   });
+//   return response.data.data; // make sure API returns an array
+// };
+
+export const fetchService = async (token: string): Promise<Service[]> => {
+  const response = await axios.get<ServiceApiResponse>(
+    `${apiUrl}/api/v1/admin/lookups/services`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  // return the array of services directly
+  return response.data.data.services;
 };
+
 
 
 //=====fetching category detail========
@@ -544,7 +557,8 @@ export const fetchNotificationPreferences = async (
       },
     }
   );
-  return response.data as NotificationPreferencesType;
+  // return response.data as NotificationPreferencesType;
+  return response.data.data.preferences as NotificationPreferencesType;
 };
 
 // =========== reset Notification ===========
@@ -565,4 +579,241 @@ export const resetNotificationPreferences = async (token: string | null) => {
   );
 
   return response.data;
+};
+
+//=====fetching pending KYC ========
+// export const fetchPendingKYC = async (token: string): Promise<userProfile> => {
+//   const response = await axios.get(`${apiUrl}/api/v1/admin/kyc/pending?`, {
+//     headers: {
+//       Authorization: `Bearer ${token}`,
+//     },
+//   });
+//   return response.data.data; 
+// };
+
+export const fetchPendingKYC = async (
+  token: string,
+  filters: { status?: string; priority?: string; keyword?: string; page?: number; limit?: number } = {}
+): Promise<PaginatedKYCResponse> => {
+  const response = await axios.get(`${apiUrl}/api/v1/admin/kyc/pending`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    params: filters, // pass filters + page + limit directly
+  });
+
+  return response.data.data; // data contains { users, page, limit, totalPages, total }
+};
+
+
+//=====fetching KYC details========
+export const fetchKYCDetailById = async (id: string, token: string) => {
+  if (!token) throw new Error("Authentication token missing");
+
+  const response = await axios.get(`${apiUrl}/api/v1/admin/kyc/applications/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data.data;
+};
+
+//======== approve KYC ================
+export const approveKYC = async (data: approveKYCType, token: string | null, id: string) => {
+  const res = await axios.post(`${apiUrl}/api/v1/admin/kyc/applications/${id}/approve`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  return res.data;
+};
+
+//======== decline KYC ================
+export const declineKYC = async (data: rejectKYCType, token: string | null, id: string) => {
+  const res = await axios.post(`${apiUrl}/api/v1/admin/kyc/applications/${id}/reject`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  return res.data;
+};
+
+
+//======== update KYC Doc ================
+export const updateKYCDoc = async (data: updateDocVerificationType, token: string | null, id: string) => {
+  const res = await axios.post(`${apiUrl}/api/v1/admin/kyc/documents/${id}/verify`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  return res.data;
+};
+
+
+//=====fetching disbute list ========
+export const fetchDisbuteList = async (token: string): Promise<userProfile> => {
+  const response = await axios.get(`${apiUrl}/api/v1/admin/disputes?`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data.data; 
+};
+
+//=====fetching disbute detail========
+export const fetchDisbuteDetailById = async (id: string, token: string) => {
+  if (!token) throw new Error("Authentication token missing");
+
+  const response = await axios.get(`${apiUrl}/api/v1/admin/disputes/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data.data;
+};
+
+//======== add dispute message ================
+export const disputeMessage = async (data: addDisbuteMessageType, token: string | null, id: string) => {
+  const res = await axios.post(`${apiUrl}/api/v1/admin/disputes/${id}/messages`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  return res.data;
+};
+
+
+//======== resolve dispute ================
+export const resolveDispute = async (data: resolveDisbuteType, token: string | null, id: string) => {
+  const res = await axios.post(`${apiUrl}/api/v1/admin/disputes/${id}/resolve`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  return res.data;
+};
+
+// //=====fetching user analysis ========
+// export const fetchUserAnalysis = async (token: string): Promise<UserAnalyticsResponse> => {
+//   const response = await axios.get(`${apiUrl}/api/v1/admin/analytics/users?`, {
+//     headers: {
+//       Authorization: `Bearer ${token}`,
+//     },
+//   });
+//   return response.data.data; 
+// };
+
+// //=====fetching revenue analysis ========
+// export const fetchRevenueAnalysis = async (token: string): Promise<RevenueAnalyticsResponse> => {
+//   const response = await axios.get(`${apiUrl}/api/v1/admin/analytics/revenue?`, {
+//     headers: {
+//       Authorization: `Bearer ${token}`,
+//     },
+//   });
+//   return response.data.data; 
+// };
+
+// //=====fetching service analysis ========
+// export const fetchServiceAnalysis = async (token: string): Promise<ServiceAnalytics> => {
+//   const response = await axios.get(`${apiUrl}/api/v1/admin/analytics/services?`, {
+//     headers: {
+//       Authorization: `Bearer ${token}`,
+//     },
+//   });
+//   return response.data.data; 
+// };
+
+export const fetchUserAnalysis = async (token: string): Promise<UserAnalyticsData> => {
+  const response = await axios.get(`${apiUrl}/api/v1/admin/analytics/users?`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return response.data.data;
+};
+
+export const fetchRevenueAnalysis = async (token: string): Promise<RevenueAnalyticsData> => {
+  const response = await axios.get(`${apiUrl}/api/v1/admin/analytics/revenue?`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return response.data.data;
+};
+
+export const fetchServiceAnalysis = async (token: string): Promise<ServiceAnalytics> => {
+  const response = await axios.get(`${apiUrl}/api/v1/admin/analytics/services?`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return response.data.data;
+};
+
+
+//=====export analysis report ========
+export const exportAnalyticReport = async (token: string): Promise<userProfile> => {
+  const response = await axios.get(`${apiUrl}/api/v1/admin/analytics/export?`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data.data; 
+};
+
+//=====fetching transaction list ========
+
+export const fetchTransactionList = async (
+  token: string,
+  params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+  }
+): Promise<PaginatedPaymentsResponse> => {
+  const response = await axios.get(`${apiUrl}/api/v1/admin/transactions`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    params,
+  });
+
+  return response.data.data;
+};
+
+
+//=====fetching transaction detail========
+export const fetchTransactionDetailById = async (id: string, token: string) => {
+  if (!token) throw new Error("Authentication token missing");
+
+  const response = await axios.get(`${apiUrl}/api/v1/admin/transactions/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data.data;
+};
+
+//=====fetching wallet list ========
+export const fetchWalletList = async (token: string): Promise<userProfile> => {
+  const response = await axios.get(`${apiUrl}/api/v1/admin/wallets?`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data.data; 
+};
+
+//=====fetching wallet detail========
+export const fetchWalletDetailById = async (id: string, token: string) => {
+  if (!token) throw new Error("Authentication token missing");
+
+  const response = await axios.get(`${apiUrl}/api/v1/admin/wallets/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data.data;
 };

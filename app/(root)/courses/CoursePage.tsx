@@ -73,8 +73,6 @@ const getStatusClass = (status: string) => {
       return "bg-green-100 text-green-800";
     case "rejected":
       return "bg-red-100 text-red-800";
-    case "resubmit":
-      return "bg-yellow-100 text-yellow-800";
     default:
       return "bg-gray-100 text-gray-800";
   }
@@ -102,9 +100,9 @@ const StatusSelect = ({
         status
       )} border-none focus:outline-none`}
     >
+      <option value=""></option>
       <option value="accepted">Accepted</option>
       <option value="rejected">Rejected</option>
-      <option value="resubmit">Resubmit</option>
     </select>
   );
 };

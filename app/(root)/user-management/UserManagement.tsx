@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import Table from "@/components/Table";
 import Header from "@/components/Header";
 import { Search, Download } from "lucide-react";
@@ -139,7 +139,7 @@ const UserManagement = () => {
     },
   ];
 
-  const handleAction = (item: User, action: string) => {
+  const handleAction = (item: DisplayUser, action: string) => {
     console.log(`Action: ${action} on user`, item);
     // Example: router.push(`/admin/users/${item.id}`);
     // or open modal, call delete API, etc.
@@ -152,7 +152,9 @@ const UserManagement = () => {
     const rows = tableData.map((item) =>
       userColumns
         .map((col) => {
-          const value = item[col.key];
+          //const value = item[col.key];
+          const value = item[col.key as keyof typeof item];
+
           // Escape commas and quotes
           if (typeof value === "string" && (value.includes(",") || value.includes('"'))) {
             return `"${value.replace(/"/g, '""')}"`;
