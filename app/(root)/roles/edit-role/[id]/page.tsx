@@ -1,14 +1,13 @@
 
-// app/courses/[id]/page.tsx
 import React from "react";
-import CourseDetail from "./CourseDetail";
+import EditRolePage from './EditRolePage'
 
 interface Props {
   params: { id: string };
 }
 
 const Page = ({ params: { id } }: Props) => {
-  return <CourseDetail id={id} />;
+  return <EditRolePage id={id} />;
 };
 
 export default Page;

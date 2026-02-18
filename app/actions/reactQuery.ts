@@ -3,22 +3,33 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { toast } from "react-toastify";
-import { approveCourse, approveKYC, createAdmin, createCategory, createOnlineCourse, createPhysicalCourse, createService, declineKYC, deleteAdminById, deleteCategoryById, deleteServiceById, disputeMessage, exportAnalyticReport, fetchAdmin, fetchAdminActivity, fetchAdminById, fetchAdminProfile, fetchCategory, fetchCategoryById, fetchCourseById, fetchCourses, fetchDashboardGeographicDistribution, fetchDashboardMetric, fetchDashboardRevenueTrends, fetchDashboardServiceCategories, fetchDashboardTopPerformingProviders, fetchDashboardUserGrowth, fetchDisbuteDetailById, fetchDisbuteList, fetchKYCDetailById, fetchNotificationPreferences, fetchPendingKYC, fetchRevenueAnalysis, fetchService, fetchServiceAnalysis, fetchServiceById, fetchTransactionDetailById, fetchTransactionList, fetchUserAnalysis, fetchUserById, fetchUsers, fetchWalletDetailById, fetchWalletList, rejectCourse, resetNotificationPreferences, resolveDispute, signIn, updateAdminProfile, updateCategory, updateCourse, updateKYCDoc, updateNotificationPreferences, updateService, updateUserProfile, updateUserStatus, userBanStatus } from "./api";
-import { addDisbuteMessageType, Admin_Query_Keys, AdminUsersResponse, approveCoursetype, approveKYCType, CourseDetail, createAdminType, createCategoryType, createServiceType, DashboardMetrics, GetCoursesResponse, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalytics, RevenueAnalyticsData, RevenueAnalyticsResponse, Service, ServiceAnalytics, updateCategoryType, updateCoursetype, updateDocVerificationType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalytics, UserAnalyticsData, UserAnalyticsResponse, userBanStatusUpdateType, userProfile } from "./type";
+import { approveCourse, approveKYC, assignRoles, createAdmin, createCategory, createOnlineCourse, createPhysicalCourse, createPlan, createRoles, createService, declineKYC, deleteAdminById, deleteCategoryById, deleteRoleById, deleteServiceById, disputeMessage, exportAnalyticReport, fetchAdmin, fetchAdminActivity, fetchAdminById, fetchAdminProfile, fetchCategory, fetchCategoryById, fetchCourseById, fetchCourses, fetchDashboardGeographicDistribution, fetchDashboardMetric, fetchDashboardRevenueTrends, fetchDashboardServiceCategories, fetchDashboardTopPerformingProviders, fetchDashboardUserGrowth, fetchDisbuteDetailById, fetchDisbuteList, fetchKYCDetailById, fetchNotificationPreferences, fetchPendingKYC, fetchPermissionList, fetchRevenueAnalysis, fetchRoleById, fetchRoleOnlyById, fetchRolesList, fetchService, fetchServiceAnalysis, fetchServiceById, fetchSubscriptionList, fetchTransactionDetailById, fetchTransactionList, fetchUserAnalysis, fetchUserById, fetchUsers, fetchWalletDetailById, fetchWalletList, rejectCourse, removeRoles, resetNotificationPreferences, resolveDispute, signIn, updateAdminProfile, updateCategory, updateCourse, updateKYCDoc, updateNotificationPreferences, updateRole, updateService, updateUserProfile, updateUserStatus, userBanStatus } from "./api";
+import { addDisbuteMessageType, Admin_Query_Keys, AdminRole, AdminUsersResponse, AdminUsersResponse1, approveCoursetype, approveKYCType, AssignRole, CourseDetail, createAdminType, createCategoryType, CreatePlanType, createServiceType, DashboardMetrics, GetCoursesResponse, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, Permission, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalytics, RevenueAnalyticsData, RevenueAnalyticsResponse, Role, Role1, RoleByIdResponse, RolesResponse, Service, ServiceAnalytics, updateCategoryType, updateCoursetype, updateDocVerificationType, updateRoleType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalytics, UserAnalyticsData, UserAnalyticsResponse, userBanStatusUpdateType, userProfile } from "./type";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 
 
 // ======= Signin call ========
+// export const useSigninAccount = () => {
+//   return useMutation<LoginResponse, Error, LoginCredentials>({
+//     mutationFn: signIn,
+//     onSuccess: (data) => {
+//       toast.success(data.message || "Login successful!");
+//     },
+//     onError: (error: any) => {
+//       const message = error?.response?.data?.message || "Invalid email or password";
+//       toast.error(message);
+//     },
+//   });
+// };
+
 export const useSigninAccount = () => {
   return useMutation<LoginResponse, Error, LoginCredentials>({
     mutationFn: signIn,
-    onSuccess: (data) => {
-      toast.success(data.message || "Login successful!");
-    },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || "Invalid email or password";
+      const message =
+        error?.response?.data?.message || "Invalid email or password";
       toast.error(message);
     },
   });
@@ -29,7 +40,7 @@ export const useSigninAccount = () => {
 export const useGetAdmin = () => {
   const { token } = useAuth();
 
-  return useQuery<AdminUsersResponse, Error>({
+  return useQuery<AdminUsersResponse1, Error>({
     queryKey: ["admins", "list"],
     queryFn: () => fetchAdmin(token as string),
     enabled: !!token,
@@ -1127,5 +1138,214 @@ export const useGetWalletDetail = (id: string, token: string) => {
     queryKey: [Admin_Query_Keys.Admin_ID, id],
     queryFn: () => fetchWalletDetailById(id, token),
     enabled: !!id && !!token, // Ensure it only runs if both are available
+  });
+};
+
+// =========== create plans ============
+export const useCreatePlan = () => {
+  const { token } = useAuth();
+
+  return useMutation({
+    mutationFn: (data: CreatePlanType) =>
+      createPlan(data, token),
+
+    onSuccess: () => {
+      toast.success("Plan created successfully");
+    },
+
+    onError: (error: any) => {
+      if (error?.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(error.message || "Something went wrong");
+      }
+    },
+  });
+};
+
+
+//=====fetching subscription list ========
+export const useGetSubscriptionList = (
+    filters: {
+    status?: string;
+    period?: string;
+    groupBy?: string;
+  } = {}
+) => {
+  const { token } = useAuth();
+
+  return useQuery<any, Error>({
+    queryKey: ["subscription-plans", filters],
+    queryFn: () => fetchSubscriptionList(token as string),
+    enabled: !!token,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+
+// =========== create plans ============
+export const useCreateRoles = () => {
+  const { token } = useAuth();
+
+  return useMutation({
+    mutationFn: (data: AdminRole) =>
+      createRoles(data, token),
+
+    onSuccess: () => {
+      toast.success("Roles created successfully");
+    },
+
+    onError: (error: any) => {
+      if (error?.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(error.message || "Something went wrong");
+      }
+    },
+  });
+};
+
+//=====fetching roles list ========
+export const useGetRolesList = () => {
+  const { token } = useAuth();
+
+  return useQuery<RolesResponse, Error>({
+    queryKey: ["admin-roles"],
+    queryFn: () => fetchRolesList(token as string),
+    enabled: !!token,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+
+//=====fetching permission list ========
+export const useGetPermissionList = () => {
+  const { token } = useAuth();
+
+  return useQuery<Permission[], Error>({
+    queryKey: ["admin-permission"],
+    queryFn: () => fetchPermissionList(token as string),
+    enabled: !!token,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+
+// ===== Delete Roles ========
+export const useDeleteRole = () => {
+  const queryClient = useQueryClient();
+
+  const { token } = useAuth(); 
+
+  return useMutation<void, Error, string>({
+    mutationFn: (roleId) => deleteRoleById(roleId, token as string),
+    
+    onSuccess: () => {
+      // ✅ Invalidate the job list cache immediately after successful deletion
+      queryClient.invalidateQueries({ queryKey: [Admin_Query_Keys.My_Admins] });      
+      // OPTIONAL: Show a success toast notification
+      toast.success("Role deleted successfully.");
+
+      
+      //Reload the entire browser window
+      setTimeout(() => {
+        window.location.reload();
+      }, 4000); 
+    },
+    
+    onError: (error) => {
+      // OPTIONAL: Show an error toast notification
+      toast.error(`Error deleting role: ${error.message}`);
+    },
+  });
+};
+
+
+// =========== assign role to admin ============
+export const useCreateAssignRole = (id: string) => {
+  const { token } = useAuth();
+
+  return useMutation({
+    mutationFn: (data: AssignRole) =>
+      assignRoles(data, token, id),
+
+    onSuccess: () => {
+      toast.success("Roles assigned successfully");
+    },
+
+    onError: (error: any) => {
+      if (error?.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(error.message || "Something went wrong");
+      }
+    },
+  });
+};
+
+// =========== remove role ============
+export const useCreateRemoveRole = () => {
+  const { token } = useAuth();
+
+  return useMutation({
+    mutationFn: (data: AssignRole) =>
+      removeRoles(data, token),
+
+    onSuccess: () => {
+      toast.success("Roles removed successfully");
+    },
+
+    onError: (error: any) => {
+      if (error?.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(error.message || "Something went wrong");
+      }
+    },
+  });
+};
+
+//=====fetching role detail ========
+export const useRoleById = (id: string, token: string) => {
+  return useQuery<RoleByIdResponse, Error>({
+    queryKey: ["role-detail", id],
+    queryFn: () => fetchRoleById(id, token),
+    enabled: !!id && !!token,
+  });
+};
+
+//=====fetching role detail to edit role ========
+export const useRoleOnlyById = (id: string, token: string) => {
+  return useQuery<Role1, Error>({
+    queryKey: ["role-only", id],
+    queryFn: () => fetchRoleOnlyById(id, token),
+    enabled: !!id && !!token,
+  });
+};
+
+
+//======== update Role ================
+export const useUpdateRole = (id: string) => {
+  const { token } = useAuth();
+  return useMutation({
+    mutationFn: async (data: updateRoleType) => updateRole(data, token, id),
+    onSuccess: () => {
+      // Show success toast notification
+      toast.success(`Role updated successfully`);
+    },
+    onError: (error: any) => {
+      // Show error toast notification
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        // If the server returned a specific message, display it
+        toast.error(`Error: ${error.response.data.message}`);
+      } else {
+        // If the error does not have a response message, display the generic error message
+        toast.error(`Error occurred: ${error.message}`);
+      }
+    },
   });
 };
