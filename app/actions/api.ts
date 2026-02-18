@@ -1,5 +1,5 @@
 import axios from "axios";
-import { addDisbuteMessageType, AdminUsersResponse, approveCoursetype, approveKYCType, CourseDetailResponse, createAdminType, createCategoryType, CreateOnlineCoursePayload, CreatePhysicalCoursePayload, createServiceType, DashboardMetrics, GetCoursesResponse, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalytics, RevenueAnalyticsData, RevenueAnalyticsResponse, Service, ServiceAnalytics, ServiceApiResponse, updateCategoryType, updateCoursetype, updateDocVerificationType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalytics, UserAnalyticsData, UserAnalyticsResponse, userBanStatusUpdateType, userProfile } from "./type";
+import { addDisbuteMessageType, AdminRole, AdminUsersResponse, approveCoursetype, approveKYCType, AssignRole, CourseDetailResponse, createAdminType, createCategoryType, CreateOnlineCoursePayload, CreatePhysicalCoursePayload, CreatePlanType, createServiceType, DashboardMetrics, GetCoursesResponse, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, Permission, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalytics, RevenueAnalyticsData, RevenueAnalyticsResponse, Role, Role1, RoleByIdResponse, RolesResponse, Service, ServiceAnalytics, ServiceApiResponse, updateCategoryType, updateCoursetype, updateDocVerificationType, updateRoleType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalytics, UserAnalyticsData, UserAnalyticsResponse, userBanStatusUpdateType, userProfile } from "./type";
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -7,14 +7,21 @@ console.log(apiUrl);
 
 
 // ======= Signin call ========
-export const signIn = async (credentials: LoginCredentials): Promise<LoginResponse> => {
+// export const signIn = async (credentials: LoginCredentials): Promise<LoginResponse> => {
+//   const res = await axios.post(`${apiUrl}/api/v1/auth/login`, credentials);
+//   return res.data;
+// };
+
+export const signIn = async (
+  credentials: LoginCredentials
+): Promise<LoginResponse> => {
   const res = await axios.post(`${apiUrl}/api/v1/auth/login`, credentials);
   return res.data;
 };
 
 //=====fetching Admin ========
 export const fetchAdmin = async (token: string): Promise<AdminUsersResponse> => {
-  const response = await axios.get(`${apiUrl}/api/v1/admin/users?role=admin`, {
+  const response = await axios.get(`${apiUrl}/api/v1/admin/admins`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -816,4 +823,191 @@ export const fetchWalletDetailById = async (id: string, token: string) => {
     },
   });
   return response.data.data;
+};
+
+// =========== create plans ============
+export const createPlan = async (
+  data: CreatePlanType,
+  token: string | null
+) => {
+  const res = await axios.post(
+    `${apiUrl}/api/v1/admin/subscriptions/plans`,
+    data,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return res.data;
+};
+
+//=====fetching subscription list ========
+export const fetchSubscriptionList = async (token: string): Promise<userProfile> => {
+  const response = await axios.get(`${apiUrl}/api/v1/subscriptions/plans/`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data.data; 
+};
+
+
+// =========== create plans ============
+export const createRoles = async (
+  data: AdminRole,
+  token: string | null
+) => {
+  const res = await axios.post(
+    `${apiUrl}/api/v1/admin/roles`,
+    data,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return res.data;
+};
+
+//=====fetching roles list ========
+export const fetchRolesList = async (
+  token: string
+): Promise<RolesResponse> => {
+  const response = await axios.get(
+    `${apiUrl}/api/v1/admin/roles`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data.data; 
+};
+
+
+//=====fetching permission list ========
+export const fetchPermissionList = async (
+  token: string
+): Promise<Permission[]> => {
+  const response = await axios.get(
+    `${apiUrl}/api/v1/admin/permissions`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data.data.permissions;
+};
+
+
+// ======= Delete roles ========
+export const deleteRoleById = async (id: string, token: string): Promise<void> => {
+  if (!token) throw new Error("Authentication token missing");
+  
+  const response = await axios.delete(`${apiUrl}/api/v1/admin/roles/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`, 
+    },
+  });
+
+  // You can return the response data if needed, but for delete, void is typical.
+  if (response.status !== 200 && response.status !== 204) {
+    throw new Error('Failed to delete role.');
+  }
+};
+
+// =========== assign role to admin ============
+export const assignRoles = async (
+  data: AssignRole,
+  token: string | null,
+  id: string
+) => {
+  const res = await axios.post(
+    `${apiUrl}/api/v1/admin/users/${id}/assign-role`,
+    data,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return res.data;
+};
+
+// =========== remove role from admin ============
+export const removeRoles = async (
+  data: AssignRole,
+  token: string | null
+) => {
+  const res = await axios.delete(
+    `${apiUrl}/api/v1/admin/users/${data.roleId}/remove-role `,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return res.data;
+};
+
+//=====fetching role detail========
+export const fetchRoleById = async (
+  id: string,
+  token: string
+): Promise<RoleByIdResponse> => {
+  if (!token) throw new Error("Authentication token missing");
+
+  const response = await axios.get<RoleByIdResponse>(
+    `${apiUrl}/api/v1/admin/roles/${id}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data; // return full structure
+};
+
+//=====fetching role detail to edit role ========
+export const fetchRoleOnlyById = async (
+  id: string,
+  token: string
+): Promise<Role1> => {
+  if (!token) throw new Error("Authentication token missing");
+
+  const response = await axios.get<RoleByIdResponse>(
+    `${apiUrl}/api/v1/admin/roles/${id}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data.data.role;
+};
+
+
+//======== update admin profile ================
+export const updateRole = async (data: updateRoleType, token: string | null, id: string) => {
+  const res = await axios.put(`${apiUrl}/api/v1/admin/roles/${id}`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  return res.data;
 };

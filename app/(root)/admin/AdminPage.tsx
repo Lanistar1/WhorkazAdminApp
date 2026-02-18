@@ -68,7 +68,7 @@ const AdminPage = () => {
 
 // Extract admins safely
 const admins: AdminUser[] = useMemo(() => {
-  return response?.data?.users ?? [];
+  return response?.data?.admins ?? [];
 }, [response]);
 
 // ======== delete Admin ===========
@@ -99,7 +99,7 @@ const tableData: AdminUser[] = filterStatus === "all"
 
 
   if (isLoading) {
-    return <div className="p-6">Loading users...</div>;
+    return <div className="p-6">Loading admins...</div>;
   }
 
   if (isError) {
@@ -131,10 +131,14 @@ const tableData: AdminUser[] = filterStatus === "all"
     {
       key: "role",
       label: "Role",
-      render: (item) => {
-        // userType is the real field
-        const type = item.userType || "—";
-        return type.charAt(0).toUpperCase() + type.slice(1); // Capitalize
+      render: (item: AdminUser) => {
+        const roleName = item.adminProfile?.role?.name;
+
+        if (!roleName) return "—";
+
+        return roleName
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (char) => char.toUpperCase());
       },
     },
     {

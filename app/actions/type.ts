@@ -6,13 +6,34 @@ export type LoginCredentials = {
   password: string;
 };
 
+// types/auth.ts
+
+export type Role2 = {
+  id: string;
+  name: string;
+  roleType: string; // e.g. "super_admin"
+  description: string;
+};
+
+export type AdminProfile = {
+  id: string;
+  isActive: boolean;
+  role: Role2;
+  permissions: string[];
+  restrictions: Record<string, any>;
+  lastLoginAt: string | null;
+};
+
 export type UserFromAPI = {
   email: string;
-  userType: "client" | "freelancer";
+  userType: "client" | "freelancer" | "admin";
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   kycVerificationStatus: string | null;
-  status?: string;
+  status: string;
+  lastName: string;
+  profilePic: string | null;
+  adminProfile?: AdminProfile;
 };
 
 export type LoginResponse = {
@@ -21,8 +42,40 @@ export type LoginResponse = {
   data: {
     user: UserFromAPI;
     token: string;
+    refreshToken: string;
   };
 };
+
+export type AuthUser = {
+  email: string;
+  userType: "client" | "freelancer" | "admin";
+  isEmailVerified: boolean;
+  isPhoneVerified: boolean;
+  kycVerificationStatus: string | null;
+  status?: string;
+  role?: Role2;
+  permissions?: string[];
+};
+
+
+
+// export type UserFromAPI = {
+//   email: string;
+//   userType: "client" | "freelancer";
+//   isEmailVerified: boolean;
+//   isPhoneVerified: boolean;
+//   kycVerificationStatus: string | null;
+//   status?: string;
+// };
+
+// export type LoginResponse = {
+//   success: boolean;
+//   message: string;
+//   data: {
+//     user: UserFromAPI;
+//     token: string;
+//   };
+// };
 
 export interface UserProfile {
   id: string;
@@ -699,3 +752,304 @@ export type ServiceApiResponse = {
   message: string;
   data: ServiceData;
 };
+
+// =========== create plans ===========
+export type CreatePlanType = {
+  name: string;
+  description: string;
+  price: number;
+  currency: "NGN" | "USD";
+  interval: "monthly" | "yearly";
+  planType: "workman" | "both";
+  features: string[];
+};
+
+// =========== create Admin Roles ===========
+export type AdminRole = {
+  name: string;
+  roleType:  string; 
+  description: string;
+  permissions: string[];
+  metadata: {
+    color: string;  
+    icon: string;
+    level: number;
+  };
+};
+
+// =========== Assign role to admin  ===========
+export type AssignRole = {
+  roleId: string;
+};
+
+// =========== Fetch admin role response  ===========
+export interface PermissionMetadata {
+  level: number;
+}
+
+export interface Permission {
+  id: string;
+  name: string;
+  displayName: string;
+  category: string;
+  action: string;
+  description: string;
+  metadata: PermissionMetadata;
+  isActive: boolean;
+  isSystem: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RolePermission {
+  id: string;
+  roleId: string;
+  permissionId: string;
+  conditions: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  permission: Permission;
+}
+
+export interface RoleMetadata {
+  icon: string;
+  color: string;
+  level: number;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  roleType: string;
+  description: string;
+  metadata: RoleMetadata;
+  isActive: boolean;
+  isSystem: boolean;
+  createdAt: string;
+  updatedAt: string;
+  rolePermissions: RolePermission[];
+}
+
+export interface RolesResponse {
+  roles: Role[];
+}
+
+// ======== get permission typescript type ============
+export interface Permission {
+  id: string;
+  name: string;
+  displayName: string;
+  category: string;
+  action: string;
+  description: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PermissionsResponse {
+  permissions: Permission[];
+}
+
+
+
+export type Permission1 = {
+  id: string;
+  name: string;
+  displayName: string;
+  category: string;
+};
+
+export type RolePermission1 = {
+  permission: Permission1;
+};
+
+export type Role1 = {
+  id: string;
+  name: string;
+  roleType:
+    | "super_admin"
+    | "user_manager"
+    | "content_moderator"
+    | "payment_manager"
+    | "support_agent"
+    | "analytics_viewer";
+  description: string;
+  isActive: boolean;
+  isSystem: boolean;
+  metadata: {
+    color: string;
+    icon: string;
+    level: number;
+  };
+  rolePermissions: RolePermission1[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type RoleByIdResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    role: Role1;
+  };
+};
+
+
+// =========== update Admin Roles ===========
+export type updateRoleType = {
+  name: string;
+  roleType: string,
+  description: string;
+  permissions: string[];
+  isActive: boolean
+};
+
+
+
+
+// ==========================
+// Role Metadata
+// ==========================
+
+export interface RoleMetadata {
+  icon: string;
+  color: string;
+  level: number;
+}
+
+// ==========================
+// Role
+// ==========================
+
+export interface Role {
+  id: string;
+  name: string;
+  roleType: string;
+  description: string;
+  metadata: RoleMetadata;
+  isActive: boolean;
+  isSystem: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ==========================
+// Notification Preferences
+// ==========================
+
+export interface NotificationChannel {
+  push: boolean;
+  email: boolean;
+}
+
+export interface NotificationPreferences {
+  payments: NotificationChannel;
+  newMessages: NotificationChannel;
+  announcements: NotificationChannel;
+  accountActivity: NotificationChannel;
+  jobStatusUpdates: NotificationChannel;
+}
+
+// ==========================
+// Admin Profile Preferences
+// ==========================
+
+export interface AdminProfilePreferences {
+  theme: string;
+  language: string;
+  notifications: {
+    sms: boolean;
+    push: boolean;
+    email: boolean;
+  };
+  dashboardLayout: string;
+}
+
+// ==========================
+// Admin Profile
+// ==========================
+
+export interface AdminProfile1 {
+  id: string;
+  userId: string;
+  roleId: string;
+  employeeId: string | null;
+  department: string | null;
+  position: string | null;
+  customPermissions: string[] | null;
+  restrictions: Record<string, any> | null;
+  preferences: AdminProfilePreferences;
+  lastLoginAt: string | null;
+  lastLoginIP: string | null;
+  isActive: boolean;
+  suspendedAt: string | null;
+  suspensionReason: string | null;
+  terminatedAt: string | null;
+  terminationReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+  role: Role;
+}
+
+// ==========================
+// Admin User
+// ==========================
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  phoneNumber: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  isEmailVerified: boolean;
+  isPhoneVerified: boolean;
+  kycVerificationStatus: string | null;
+  kycType: string | null;
+  kycRejectionReason: string | null;
+  kycIdPicture: string | null;
+  profilePic: string | null;
+  address: string | null;
+  bio: string | null;
+  googleId: string | null;
+  appleId: string | null;
+  userType: "admin";
+  status: string;
+  payoutOption: string;
+  skills: string[] | null;
+  dashboardPreferences: Record<string, any> | null;
+  notificationPreferences: NotificationPreferences | null;
+  failedLoginAttempts: number;
+  lockedUntil: string | null;
+  createdAt: string;
+  updatedAt: string;
+
+  adminProfile: AdminProfile1;
+  role: Role;
+}
+
+// ==========================
+// Pagination
+// ==========================
+
+export interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  currentPage: number;
+}
+
+// ==========================
+// API Response
+// ==========================
+
+export type AdminUsersResponse1 = {
+  success: boolean;
+  message: string;
+  data: {
+    admins: AdminUser[];
+    pagination: Pagination;
+  };
+}

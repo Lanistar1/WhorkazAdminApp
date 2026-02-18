@@ -680,124 +680,124 @@ const [preferences, setPreferences] = useState<NotificationPreferencesType>({
     // }
 
     if (activeTab === 'platform-policies') {
-  return (
-    <div className="md:ml-10 bg-gray-50 md:w-[600px] rounded-lg mt-5">
-      <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 space-y-8">
+      return (
+        <div className="md:ml-10 bg-gray-50 md:w-[600px] rounded-lg mt-5">
+          <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 space-y-8">
 
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-semibold text-[#32323E]">
-              Platform Policies & Content
-            </h2>
-            <p className="text-[14px] text-[#95959F] mt-1">
-              Manage the legal and public content of your platform.
-            </p>
-          </div>
+            {/* Header */}
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-semibold text-[#32323E]">
+                  Platform Policies & Content
+                </h2>
+                <p className="text-[14px] text-[#95959F] mt-1">
+                  Manage the legal and public content of your platform.
+                </p>
+              </div>
 
-          {selectedPolicy && (
-            <button
-              onClick={() => setSelectedPolicy(null)}
-              className="text-sm text-[#3900DC] font-medium hover:underline"
-            >
-              ← Back to list
-            </button>
-          )}
-        </div>
+              {selectedPolicy && (
+                <button
+                  onClick={() => setSelectedPolicy(null)}
+                  className="text-sm text-[#3900DC] font-medium hover:underline"
+                >
+                  ← Back to list
+                </button>
+              )}
+            </div>
 
-        {/* Policy List */}
-        {!selectedPolicy && (
-          <div className="space-y-2">
-            {policyItems.map((item) => (
-              <div
-                key={item.name}
-                className="flex justify-between items-center py-4 px-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
-              >
-                <span className="text-[16px] font-medium text-[#4B4B56]">
-                  {item.name}
-                </span>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() =>
-                      setSelectedPolicy({ name: item.name, mode: "view" })
-                    }
-                    className="px-4 py-2 bg-gray-100 text-[#4B4B56] rounded-lg text-[14px] font-medium hover:bg-gray-200 transition-colors border border-gray-200"
+            {/* Policy List */}
+            {!selectedPolicy && (
+              <div className="space-y-2">
+                {policyItems.map((item) => (
+                  <div
+                    key={item.name}
+                    className="flex justify-between items-center py-4 px-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
                   >
-                    View
+                    <span className="text-[16px] font-medium text-[#4B4B56]">
+                      {item.name}
+                    </span>
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() =>
+                          setSelectedPolicy({ name: item.name, mode: "view" })
+                        }
+                        className="px-4 py-2 bg-gray-100 text-[#4B4B56] rounded-lg text-[14px] font-medium hover:bg-gray-200 transition-colors border border-gray-200"
+                      >
+                        View
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          setSelectedPolicy({ name: item.name, mode: "edit" })
+                        }
+                        className="px-4 py-2 bg-[#3900DC] text-white rounded-lg text-[14px] font-medium hover:bg-[#2E00B3] transition-colors"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* View Policy */}
+            {selectedPolicy?.mode === "view" && (
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-[#32323E]">
+                  {selectedPolicy.name}
+                </h3>
+
+                <div className="bg-gray-50 p-4 rounded-lg border text-[15px] leading-relaxed text-[#4B4B56]">
+                  {policyContent[selectedPolicy.name as keyof typeof policyContent]}
+                </div>
+              </div>
+            )}
+
+            {/* Edit Policy */}
+            {selectedPolicy?.mode === "edit" && (
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-[#32323E]">
+                  Edit {selectedPolicy.name}
+                </h3>
+
+                <textarea
+                  rows={10}
+                  value={policyContent[selectedPolicy.name as keyof typeof policyContent]}
+                  onChange={(e) =>
+                    setPolicyContent((prev) => ({
+                      ...prev,
+                      [selectedPolicy.name]: e.target.value
+                    }))
+                  }
+                  className="w-full p-4 border border-gray-300 rounded-xl text-[15px] focus:outline-none focus:ring-2 focus:ring-[#3900DC]"
+                />
+
+                <div className="flex justify-end gap-4">
+                  <button
+                    onClick={() => setSelectedPolicy(null)}
+                    className="px-6 py-3 bg-gray-100 text-[#4B4B56] rounded-full text-[14px] font-medium hover:bg-gray-200"
+                  >
+                    Cancel
                   </button>
 
                   <button
-                    onClick={() =>
-                      setSelectedPolicy({ name: item.name, mode: "edit" })
-                    }
-                    className="px-4 py-2 bg-[#3900DC] text-white rounded-lg text-[14px] font-medium hover:bg-[#2E00B3] transition-colors"
+                    onClick={() => {
+                      console.log("Saved:", policyContent);
+                      setSelectedPolicy(null);
+                    }}
+                    className="px-6 py-3 bg-[#3900DC] text-white rounded-full text-[14px] font-medium hover:bg-[#2E00B3]"
                   >
-                    Edit
+                    Save Changes
                   </button>
                 </div>
               </div>
-            ))}
+            )}
+
           </div>
-        )}
-
-        {/* View Policy */}
-        {selectedPolicy?.mode === "view" && (
-          <div className="space-y-4">
-            <h3 className="text-xl font-semibold text-[#32323E]">
-              {selectedPolicy.name}
-            </h3>
-
-            <div className="bg-gray-50 p-4 rounded-lg border text-[15px] leading-relaxed text-[#4B4B56]">
-              {policyContent[selectedPolicy.name as keyof typeof policyContent]}
-            </div>
-          </div>
-        )}
-
-        {/* Edit Policy */}
-        {selectedPolicy?.mode === "edit" && (
-          <div className="space-y-4">
-            <h3 className="text-xl font-semibold text-[#32323E]">
-              Edit {selectedPolicy.name}
-            </h3>
-
-            <textarea
-              rows={10}
-              value={policyContent[selectedPolicy.name as keyof typeof policyContent]}
-              onChange={(e) =>
-                setPolicyContent((prev) => ({
-                  ...prev,
-                  [selectedPolicy.name]: e.target.value
-                }))
-              }
-              className="w-full p-4 border border-gray-300 rounded-xl text-[15px] focus:outline-none focus:ring-2 focus:ring-[#3900DC]"
-            />
-
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={() => setSelectedPolicy(null)}
-                className="px-6 py-3 bg-gray-100 text-[#4B4B56] rounded-full text-[14px] font-medium hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={() => {
-                  console.log("Saved:", policyContent);
-                  setSelectedPolicy(null);
-                }}
-                className="px-6 py-3 bg-[#3900DC] text-white rounded-full text-[14px] font-medium hover:bg-[#2E00B3]"
-              >
-                Save Changes
-              </button>
-            </div>
-          </div>
-        )}
-
-      </div>
-    </div>
-  );
-}
+        </div>
+      );
+    }
 
 
 

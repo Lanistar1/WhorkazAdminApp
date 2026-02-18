@@ -27,7 +27,7 @@ const NewAdmin = () => {
     password: "",
     firstName: "",
     lastName: "",
-    role: "", // default to "admin" since this is admin creation
+    role: "admin", // default to "admin" since this is admin creation
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -129,6 +129,22 @@ const NewAdmin = () => {
           />
 
           {/* Role - Fixed to "admin" but shown for clarity */}
+          {/* <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Role
+            </label>
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleInputChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 text-gray-800"
+              required
+            >
+              <option value="" disabled>Select a role</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div> */}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Role
@@ -140,14 +156,16 @@ const NewAdmin = () => {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 text-gray-800"
               required
             >
-              <option value="admin">Admin</option>
-              <option value="⁠COO (Chief Operating Officer)">⁠COO (Chief Operating Officer)</option>
-              <option value="Finance & Admin Manager">Finance & Admin Manager</option>
-              <option value="⁠Customer Support / Quality Control">⁠Customer Support / Quality Control</option>
-              <option value="⁠Growth Development & AI Lead">⁠Growth Development & AI Lead</option>
-              {/* Add more roles if backend supports them later */}
+              {/* <option value="admin">Admin</option> */}
+              <option value="super_admin">Super Admin</option>
+              <option value="user_manager">User Manager</option>
+              <option value="content_moderator">Content Moderator</option>
+              <option value="payment_manager">Payment Manager</option>
+              <option value="support_agent">Support Agent</option>
+              <option value="analytics_viewer">Analytics Viewer</option>
             </select>
           </div>
+
 
           {/* Submit Button */}
           <div className="pt-4">
