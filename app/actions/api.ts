@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
-import { addDisbuteMessageType, AdminRole, AdminSettings, AdminUsersResponse1, approveCoursetype, approveKYCType, AssignRole, CourseDetailResponse, createAdminType, createCategoryType, CreateOnlineCoursePayload, CreatePhysicalCoursePayload, CreatePlanType, createServiceType, DashboardMetrics, GetCoursesResponse, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, Permission, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalyticsData, Role1, RoleByIdResponse, RolesResponse, Service, ServiceAnalytics, ServiceApiResponse, updateCategoryType, updateCoursetype, updateDocVerificationType, updateRoleType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalyticsData, userBanStatusUpdateType, userProfile } from "./type";
+import { addDisbuteMessageType, AdminRole, AdminSettings, AdminUsersResponse1, approveCoursetype, approveKYCType, AssignRole, CourseDetail, CourseDetailResponse, CoursesResponse, createAdminType, createCategoryType, CreateOnlineCoursePayload, CreatePhysicalCoursePayload, CreatePlanType, createServiceType, DashboardMetrics, EnrolledCoursesResponse, GetCoursesResponse, initiatePaymentPayload, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, Permission, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalyticsData, Role1, RoleByIdResponse, RolesResponse, Service, ServiceAnalytics, ServiceApiResponse, updateCategoryType, updateCoursetype, updateDocVerificationType, updateRoleType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalyticsData, userBanStatusUpdateType, userProfile } from "./type";
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -189,30 +189,102 @@ export const updateUserProfile = async (data: updateUserProfileType, token: stri
 //   });
 //   return response.data.data; // { user: { ... } }
 // };
-export const fetchCourses = async (token: string): Promise<PaginatedCourses> => {
-  const response = await axios.get<GetCoursesResponse>(`${apiUrl}/api/v1/admin/courses`, {
+// =========Get all courses ========
+export const fetchCourses = async (
+  token: string,
+  params?: {
+    category?: string;
+    level?: string;
+    classType?: string;
+    workmanId?: string;
+    keyword?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    isActive?: boolean;
+  }
+): Promise<CoursesResponse["data"]> => {
+  if (!token) throw new Error("Authentication required");
+
+  const response = await axios.get(`${apiUrl}/api/v1/courses`, {
+    params,
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
+
   return response.data.data;
 };
 
 
-//=====fetching course detail========
-export const fetchCourseById = async (id: string, token: string) => {
-  if (!token) throw new Error("Authentication token missing");
+// =========Get courses details ========
+export const fetchCourseById = async (
+  token: string,
+  courseId: string
+): Promise<CourseDetail> => {
+  if (!token) throw new Error("Authentication required");
+  if (!courseId) throw new Error("Course ID is required");
 
   const response = await axios.get<CourseDetailResponse>(
-    `${apiUrl}/api/v1/admin/courses/${id}`,
+    `${apiUrl}/api/v1/courses/${courseId}`,
     {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     }
   );
 
-  return response.data.data.course; // return the actual course object
+  return response.data.data.course; // ← .course, not .data
+};
+
+
+// =========Get my courses ========
+export const fetchMyCourses = async (
+  token: string,
+  params?: {
+    category?: string;
+    level?: string;
+    classType?: string;
+    workmanId?: string;
+    keyword?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    isActive?: boolean;
+  }
+): Promise<CoursesResponse["data"]> => {
+  if (!token) throw new Error("Authentication required");
+
+  const response = await axios.get(`${apiUrl}/api/v1/courses/my-courses`, {
+    params,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data.data;
+};
+
+// =========Get my enrolled courses ========
+export const fetchMyEnrolledCourses = async (
+  token: string,
+  params?: {
+    category?: string;
+    level?: string;
+    classType?: string;
+    workmanId?: string;
+    keyword?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    isActive?: boolean;
+  }
+): Promise<EnrolledCoursesResponse["data"]> => {
+  if (!token) throw new Error("Authentication required");
+
+  const response = await axios.get(`${apiUrl}/api/v1/courses/enrollments/my-enrollments`, {
+    params,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data.data;
 };
 
 //======== approve course ================
@@ -295,7 +367,7 @@ export const createPhysicalCourse = async (data: CreatePhysicalCoursePayload) =>
 };
 
 //=====fetching categoty ========
-export const fetchCategory = async (token: string): Promise<userProfile> => {
+export const fetchCategory = async (token: string): Promise<any> => {
   const response = await axios.get(`${apiUrl}/api/v1/admin/lookups/categories`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -1050,5 +1122,16 @@ export const getSettings = async (token: string | null) => {
     }
   );
 
+  return res.data;
+};
+
+//======== initiate payment ================
+export const initiatePayment = async (data: initiatePaymentPayload, token: string | null) => {
+  const res = await axios.post(`${apiUrl}/api/v1/payments/initialize`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
   return res.data;
 };

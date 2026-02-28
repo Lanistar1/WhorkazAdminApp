@@ -1088,90 +1088,6 @@ export type AdminUsersResponse1 = {
 }
 
 
-
-
-// =========== Settings Payload ===========
-// export type SettingsPayload = {
-//   general: {
-//     supportEmail: string;
-//     supportPhoneNumber: string;
-//     defaultCurrency: string;
-//     timeZone: string;
-//     location: string;
-//     kycProvider: string;
-
-//     kycProviders: {
-//       id: string;
-//       name: string;
-//       isActive: boolean;
-//       apiKey: string;
-//       apiUrl: string;
-//     }[];
-//   };
-
-//   payments: {
-//     defaultPaymentGateway: string;
-
-//     paymentGateways: {
-//       id: string;
-//       name: string;
-//       isActive: boolean;
-//       apiKey: string;
-//       secretKey: string;
-//       supportedCurrencies: string[];
-//     }[];
-
-//     withdrawCycle: "weekly" | "monthly";
-//     marketplaceCommissionRate: number;
-//     minimumWithdrawAmount: number;
-//     jobPostingFee: number;
-//     jobPostingFeeEnabled: boolean;
-//     jobPostingFeeMode: "per_job" | "one_time";
-
-//     jobCommissionRateTier1: number;
-//     jobCommissionRateTier2: number;
-//     jobCommissionTierThreshold: number;
-
-//     courseCommissionRate: number;
-//     trainingPartnerAnnualFee: number;
-//     trainingPartnerFreeYears: number;
-
-//     freeWeeklyJobViewLimit: number;
-//     basicMonthlyBidLimit: number;
-//     proMonthlyBidLimit: number;
-//   };
-
-//   preferences: {
-//     notificationPreferences: {
-//       newUserRegistration: boolean;
-//       kycPending: boolean;
-//       newDisputeRaised: boolean;
-//       paymentFailed: boolean;
-//     };
-
-//     alertTypes: {
-//       email: boolean;
-//       inDashboardAlerts: boolean;
-//     };
-//   };
-
-//   platformPolicies: {
-//     termsOfService: string;
-//     privacyPolicy: string;
-//     refundPolicy: string;
-//     communityGuidelines: string;
-//   };
-
-//   accessActivity: {
-//     platformStatus: "active" | "inactive";
-//     twoFactorAuthentication: boolean;
-//     limitLoginAttempts: boolean;
-//     maxLoginAttempts: number;
-//   };
-// };
-
-
-
 // types/admin-settings.ts
 
 export type KycProvider = {
@@ -1283,4 +1199,89 @@ export interface KYCApplication {
 
 export interface GetKYCDetailResponse {
   application: KYCApplication;
+}
+
+
+// ========== fetch Enrollment course type ===============
+export interface Enrollment {
+  id: string;
+  courseId: string;
+  userId: string;
+  status: string;
+  progress: number;
+  lessonProgress: any | null;
+  completedAt: string | null;
+  certificateUrl: string | null;
+  isCertificateGenerated: boolean;
+  paymentId: string;
+  createdAt: string;
+  updatedAt: string;
+  course: Course;
+  payment: {
+    id: string;
+    reference: string;
+    provider: string;
+    contextType: string;
+    amount: string;
+    status: string;
+    paidAt: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
+export interface EnrolledCoursesResponse {
+  success: boolean;
+  message: string;
+  data: {
+    enrollments: Enrollment[];
+    count: number;
+  };
+}
+
+// ========== fetch all course type ===============
+export interface Course {
+  id: string;
+  title: string;
+  category: string;
+  level: string; // e.g., 'beginner', 'intermediate', 'advanced', 'expert'
+  price: string; // e.g., '₦25,000' or number if preferred
+  estimatedDuration: string; // e.g., '45mins'
+  image: string;
+  averageRating: string;
+  totalRatings: number;
+  totalEnrollments: number;
+  classType: "physical" | "online"; // e.g., 'online' or 'physical'
+  isActive: boolean;
+  createdAt: string;
+  // Add more fields if discovered later, e.g., description, workman, etc.
+}
+
+export interface CoursesResponse {
+  success: boolean;
+  message: string;
+  data: {
+    courses: Course[];
+    count: number;
+  };
+}
+
+// =========== initiate payment ==========
+type PaymentContextType = "course" | "job" | "marketplace";
+type PaymentProvider = "paystack" | "flutterwave" | "coinbase";
+
+export type initiatePaymentPayload = {
+  _amount?: number | string; // optional (for testing or override from context)
+
+  // Optional Context (What is this payment for?)
+  contextType?: PaymentContextType;
+  contextId?: string;
+  contextQuantity?: number;
+
+  // Optional Provider (Defaults to Paystack if omitted)
+  provider?: PaymentProvider;
+  savePaymentMethod?: boolean;
+
+  // Optional Callback (Highest priority)
+  _callbackUrl?: string;
 }

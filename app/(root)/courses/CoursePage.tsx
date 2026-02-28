@@ -1,362 +1,585 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
-
-import React, { useState, useMemo } from "react";
-import Table2 from "@/components/Table2";
+import React, { useState } from "react";
 import Header from "@/components/Header";
-import { Search, Download } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import CustomModal from "@/components/CustomModal";
-import SuccessModal from "@/components/SuccessModal";
-
-// Hooks and mutations
-import {
-  useGetCourseList,
-  useApproveCourse,
-  useRejectCourse,
-} from "@/app/actions/reactQuery"; // Adjust path
-
-// Types from table component (import to make compatible)
-import type { TableItem } from "@/components/Table2";
+import { useCourses, useMyCourses, useMyEnrolledCourses } from "@/app/actions/reactQuery"; 
+import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
+import { Trash2 } from 'lucide-react'; 
+import axios from "axios";
 import { useAuth } from "@/app/context/AuthContext";
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 
-// Course types based on your API response
-interface Workman {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-  email: string;
-}
 
-interface Course {
-  id: string;
-  title: string;
-  category: string;
-  level: string;
-  price: string;
-  classType: "physical" | "online";
-  isActive: boolean;
-  averageRating: string;
-  totalRatings: number;
-  totalEnrollments: number;
-  createdAt: string;
-  updatedAt: string;
-  workman: Workman;
-  status?: string;  // Optional since not in current API response
-}
 
-interface PaginatedCourses {
-  courses: Course[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+const CoursesPage = () => {
+  const { token } = useAuth();
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("Marketplace");
+  const [keyword, setKeyword] = useState("");
+  const [category, setCategory] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
 
-// Payload types
-export type approveCoursetype = {
-  admin_id: string;
-  review_notes: string;
-  approved: boolean;
-};
 
-export type rejectCoursetype = {
-  reason: string;
-  rejection_notes: string;
-  allow_resubmission: boolean;
-};
-
-// Status class helper
-const getStatusClass = (status: string) => {
-  switch (status?.toLowerCase()) {
-    case "accepted":
-      return "bg-green-100 text-green-800";
-    case "rejected":
-      return "bg-red-100 text-red-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-};
-
-// Status Select component (typed for Course)
-const StatusSelect = ({
-  item,
-  updateStatus,
-}: {
-  item: Course;
-  updateStatus?: (id: string | number, newStatus: string) => void;
-}) => {
-  const [status, setStatus] = useState(item.status || "resubmit");
-
-  return (
-    <select
-      value={status}
-      onChange={(e) => {
-        const newStatus = e.target.value;
-        setStatus(newStatus);
-        if (updateStatus) updateStatus(item.id, newStatus);
-      }}
-      className={`px-3 py-1 rounded-md text-sm font-medium ${getStatusClass(
-        status
-      )} border-none focus:outline-none`}
-    >
-      <option value=""></option>
-      <option value="accepted">Accepted</option>
-      <option value="rejected">Rejected</option>
-    </select>
-  );
-};
-
-// Local TableColumn interface (non-generic to avoid issues)
-interface TableColumn {
-  key: string;
-  label: string;
-  render?: (
-    item: any,
-    updateStatus?: (id: string | number, newStatus: string) => void
-  ) => React.ReactNode;
-}
-
-// Component
-const CoursePage = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
-  const [successModalOpen, setSuccessModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Course | null>(null);
-  const [newStatus, setNewStatus] = useState("");
-  const [reason, setReason] = useState("");
-  const [requestResubmission, setRequestResubmission] = useState(false);
-
-  // Fetch courses
-  const {
-    data: rawData,
-    isLoading,
-    isError,
-    error,
-  } = useGetCourseList({
-    keyword: searchTerm.trim() || undefined,
-    category: undefined, // add if needed
-    status: filterStatus === "all" ? undefined : filterStatus,
-  });
-
-  // Extract courses
-  const courses = useMemo(() => rawData?.courses ?? [], [rawData]);
-
-  // Mutations (per course id)
-  // const approveMutation = useApproveCourse(selectedItem?.id || "");
-  // const rejectMutation = useRejectCourse(selectedItem?.id || "");
-
-  const approveMutation = useApproveCourse();
-  const rejectMutation = useRejectCourse();
-
-  // Filtered data
-  const filteredData = courses.filter((item) => {
-    const matchesSearch = Object.values(item)
-      .join(" ")
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      filterStatus === "all" ||
-      (item.status || "resubmit").toLowerCase() === filterStatus.toLowerCase();
-    return matchesSearch && matchesStatus;
-  });
-
-  const handleAction = (item: Course, action: string) => {
-    console.log(`Action: ${action} on item`, item);
+  const handleDeleteClick = (courseId: string) => {
+    setCourseToDelete(courseId);
+    setShowDeleteModal(true);
   };
 
-  const updateStatus = (id: string | number, status: string) => {
-    const course = courses.find((c) => c.id === id);
-    if (course) {
-      setSelectedItem(course);          // ← use setSelectedItem
-      setNewStatus(status);
-      setConfirmationModalOpen(true);
+  const handleConfirmDelete = async () => {
+    if (!courseToDelete) return;
+
+    try {
+      await axios.delete(`${apiUrl}/api/v1/courses/${courseToDelete}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Force immediate refresh
+      // queryClient.invalidateQueries({ queryKey: ['my-courses'] });
+      // queryClient.refetchQueries({ queryKey: ['my-courses'] });
+
+      setShowDeleteModal(false);
+      setCourseToDelete(null);
+
+      toast.success("Course deleted successfully");
+
+      //====== reload window after deleting ======
+      window.location.reload();
+
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Failed to delete course");
     }
   };
 
- 
-  const handleConfirm = () => {
-    if (!selectedItem?.id || !newStatus) return;
+  // Fetch courses based on filters (for Marketplace tab)
+  const { data: coursesData, isLoading: isLoadingCourses } = useCourses({
+    keyword: keyword || undefined,
+    category: category || undefined,
+    // Add other filters as needed, e.g., isActive: true
+  });
 
-    // Replace with real admin ID from your auth context
-    const adminId = "your-real-admin-id-here"; // ← update this
+  const { data: myCoursesData, isLoading: isLoadingMyCourses } = useMyCourses({
+    keyword: keyword || undefined,
+    category: category || undefined,
+    // Add other filters as needed, e.g., isActive: true
+  });
+
+  const { data: enrolledCoursesData, isLoading: isLoadingEnrolled } = useMyEnrolledCourses({
+    keyword: keyword || undefined,
+    category: category || undefined,
+  });
 
 
-    if (newStatus === "accepted") {
-      const payload: approveCoursetype = {
-        admin_id: adminId,
-        review_notes: reason.trim() || "Approved",
-        approved: true,
-      };
+  const courses = coursesData?.courses || [];
+  const myCourses = myCoursesData?.courses || [];
+  // const enrolledCourses = enrolledCoursesData?.courses || [];
+const enrolledCourses = enrolledCoursesData?.enrollments?.map((e) => e.course) || [];
 
-      approveMutation.mutate(
-        { id: selectedItem.id, data: payload },
-        {
-          onSuccess: () => {
-            setConfirmationModalOpen(false);
-            setSuccessModalOpen(true);
-            setReason("");
-            setRequestResubmission(false);
-          },
-        }
-      );
-    } else {
-      const payload: rejectCoursetype = {
-        reason: reason.trim() || "Not approved",
-        rejection_notes: reason.trim() || "",
-        allow_resubmission: newStatus === "resubmit" || requestResubmission,
-      };
 
-      rejectMutation.mutate(
-        { id: selectedItem.id, data: payload },
-        {
-          onSuccess: () => {
-            setConfirmationModalOpen(false);
-            setSuccessModalOpen(true);
-            setReason("");
-            setRequestResubmission(false);
-          },
-        }
-      );
-    }
-  };
+  const totalCount = coursesData?.count || 0;
 
-  const handleCloseConfirmation = () => {
-    setConfirmationModalOpen(false);
-    setReason("");
-    setRequestResubmission(false);
-  };
+  // Derive popular courses: sorted by totalEnrollments descending
+  const popularCourses = [...courses]
+    .sort((a, b) => b.totalEnrollments - a.totalEnrollments)
+    .slice(0, 6); // Limit to top 6 or adjust as needed
 
-  const handleCloseSuccess = () => {
-    setSuccessModalOpen(false);
-  };
+  // Derive recommended courses: sorted by averageRating descending
+    const recommendedCourses = [...courses]
+    .sort((a, b) => parseFloat(b.averageRating) - parseFloat(a.averageRating))
+    .slice(0, 6);
 
-  const exportToCSV = () => {
-    const headers = userColumns.map((col) => col.label).join(",");
-    const rows = filteredData.map((item) =>
-      userColumns.map((col) => {
-        if (col.render) {
-          return col.render(item) ?? "";
-        }
-        return item[col.key] ?? "";
-      }).join(",")
-    );
-    const csvContent = [headers, ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "courses.csv";
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
 
-  const userColumns: TableColumn[] = [
-    {
-      key: "courseTitle",
-      label: "Course title",
-      render: (item) => item.title,
-    },
-    {
-      key: "submittedBy",
-      label: "Submitted By",
-      render: (item) => {
-        const w = item.workman;
-        return `${w.firstName || ""} ${w.lastName || ""}`.trim() || w.email;
-      },
-    },
-    {
-      key: "submittedDate",
-      label: "Date Submitted",
-      render: (item) => new Date(item.createdAt).toLocaleDateString("en-GB"),
-    },
-    {
-      key: "viewCourse",
-      label: "View course",
-      render: (item) => (
-        <Link href={`/courses/${item.id}`}>
-          <span className="text-blue-600 hover:underline cursor-pointer">
-            View course
-          </span>
-        </Link>
-      ),
-    },
-    {
-      key: "status",
-      label: "Status",
-      render: (item, updateStatus) => (
-        <StatusSelect item={item} updateStatus={updateStatus} />
-      ),
-    },
-  ];
+     // Derive popular courses for my courses: sorted by totalEnrollments descending
+  const popularMyCourses = [...myCourses]
+    .sort((a, b) => b.totalEnrollments - a.totalEnrollments)
+    .slice(0, 6); // Limit to top 6 or adjust as needed
 
-  return (
-    <div className="min-h-screen bg-white dark:bg-white text-gray-900">
-      <Header title="Courses and content" />
-      <div className="p-6">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-          <div className="relative w-full md:w-2/3">
-            <input
-              type="text"
-              placeholder="Search by course title"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full p-2 pl-10 border border-[#C7C7CF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3900DC]"
-            />
-            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
-          </div>
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="p-2 border border-[#C7C7CF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3900DC]"
-            >
-              <option value="all">All Statuses</option>
-              <option value="accepted">Accepted</option>
-              <option value="rejected">Rejected</option>
-            </select>
-            <button
-              onClick={exportToCSV}
-              className="flex items-center gap-2 px-4 py-2 text-black border border-[#C7C7CF] rounded-lg hover:bg-[#2E00B3]"
-            >
-              <Download className="h-5 w-5" />
-              Export CSV
-            </button>
-            <Link href="/courses/new-course">
-              <button
-                className="bg-[#3900DC] cursor-pointer text-white font-semibold rounded-[32px] w-[80px] py-2  px-5 flex items-center justify-center hover:opacity-90 transition"
+  // Derive recommended courses for my course: sorted by averageRating descending
+  // const recommendedMyCourses = [...myCourses]
+  //   .sort((a, b) => b.averageRating - a.averageRating)
+  //   .slice(0, 6); // Limit to top 6 or adjust as needed
+
+
+
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "Marketplace":
+        return (
+          <>
+            {/* Popular Courses */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-[20px] font-semibold text-[#32323E]">
+                  Popular Courses ({popularCourses.length})
+                </h2>
+                <div className="relative">
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="appearance-none px-4 py-2 bg-white dark:bg-white border border-gray-300 dark:border-gray-300 rounded-[12px] text-[14px] font-medium text-[#4B4B56] dark:text-[#4B4B56] hover:bg-gray-100 dark:hover:bg-gray-100 transition-colors pr-8"
+                  >
+                    <option value="">All</option>
+                    <option value="electrical">Electrical</option>
+                    <option value="plumbing">Plumbing</option>
+                    <option value="carpentry">Carpentry</option>
+                    {/* Add more categories as needed */}
+                  </select>
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 text-gray-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+              {isLoadingCourses ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {Array(3)
+                    .fill(0)
+                    .map((_, i) => (
+                      <div
+                        key={i}
+                        className="bg-white border rounded-[12px] p-4 shadow-sm animate-pulse"
+                      >
+                        <div className="w-full h-48 bg-gray-300 rounded" />
+                        <div className="p-4 space-y-3">
+                          <div className="h-5 bg-gray-300 rounded w-3/4" />
+                          <div className="h-4 bg-gray-200 rounded w-1/2" />
+                          <div className="h-4 bg-gray-200 rounded w-1/3" />
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              ) : popularCourses.length === 0 ? (
+                <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300">
+                  <div className="w-28 h-28 mx-auto mb-6 bg-gray-200 border-4 border-dashed rounded-xl" />
+                  <p className="text-xl font-semibold text-[#4B4B56]">No popular courses found</p>
+                  <p className="text-[#95959F] mt-3 max-w-md mx-auto">
+                    Try adjusting your search or check back later.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {popularCourses.map((course) => (
+                    <Link href={`/courses/${course.id}`} key={course.id}>
+                      <div className="bg-white dark:bg-white border border-[#DBDBE3] rounded-[12px] overflow-hidden shadow-sm">
+                        {/* <Image
+                          src={course.image}
+                          alt={course.title}
+                          width={400}
+                          height={200}
+                          className="w-full h-48 object-cover"
+                        /> */}
+                        <Image
+                          src={
+                            course.image && !course.image.includes("example.com")
+                              ? course.image
+                              : "/assets/images/electrician.png" // ← Create this file in public/assets/images/
+                          }
+                          alt={course.title}
+                          width={400}
+                          height={200}
+                          className="w-full h-48 object-cover"
+                          priority={false} // Optional: helps with LCP if you have many images
+                        />
+                        <div className="p-4">
+                          <h3 className="text-[16px] font-semibold text-[#32323E] mb-2">
+                            {course.title}
+                          </h3>
+                          <div className="flex justify-between items-center space-x-2 text-[14px] text-[#95959F] mb-2">
+                            <span>Skill Level: {course.level}</span>
+                            <span>{course.estimatedDuration}</span>
+                          </div>
+                          <p className="text-[16px] font-semibold text-[#32323E]">
+                            ₦{Number(course.price).toLocaleString()}
+                            {/* {course.price} */}
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Recommended Courses */}
+            <div>
+              <h2 className="text-[20px] font-semibold text-[#32323E] mb-4">
+                Recommended Courses ({recommendedCourses.length})
+              </h2>
+              {isLoadingCourses ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {Array(3)
+                    .fill(0)
+                    .map((_, i) => (
+                      <div
+                        key={i}
+                        className="bg-white border rounded-[12px] p-4 shadow-sm animate-pulse"
+                      >
+                        <div className="w-full h-48 bg-gray-300 rounded" />
+                        <div className="p-4 space-y-3">
+                          <div className="h-5 bg-gray-300 rounded w-3/4" />
+                          <div className="h-4 bg-gray-200 rounded w-1/2" />
+                          <div className="h-4 bg-gray-200 rounded w-1/3" />
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              ) : recommendedCourses.length === 0 ? (
+                <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300">
+                  <div className="w-28 h-28 mx-auto mb-6 bg-gray-200 border-4 border-dashed rounded-xl" />
+                  <p className="text-xl font-semibold text-[#4B4B56]">No recommended courses found</p>
+                  <p className="text-[#95959F] mt-3 max-w-md mx-auto">
+                    Try adjusting your search or check back later.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {recommendedCourses.map((course) => (
+                    <Link href={`/courses/${course.id}`} key={course.id}>
+                      <div className="bg-white dark:bg-white border border-[#DBDBE3] rounded-[12px] overflow-hidden shadow-sm">
+                        
+                        <Image
+                          src={
+                            course.image && !course.image.includes("example.com")
+                              ? course.image
+                              : "/assets/images/electrician.png" // ← Create this file in public/assets/images/
+                          }
+                          alt={course.title}
+                          width={400}
+                          height={200}
+                          className="w-full h-48 object-cover"
+                          priority={false} // Optional: helps with LCP if you have many images
+                        />
+                        <div className="p-4">
+                          <h3 className="text-[16px] font-semibold text-[#32323E] mb-2">
+                            {course.title}
+                          </h3>
+                          <div className="flex justify-between items-center space-x-2 text-[14px] text-[#95959F] mb-2">
+                            <span>Skill Level: {course.level}</span>
+                            <span>{course.estimatedDuration}</span>
+                          </div>
+                          <p className="text-[16px] font-semibold text-[#32323E]">
+                            ₦{Number(course.price).toLocaleString()}
+                            {/* {course.price} */}
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        );
+      // case "Paid courses":
+      //   return (
+      //     <div className="text-center py-12">
+      //       <h3 className="text-[18px] font-semibold text-[#32323E]">Nothing to show here</h3>
+      //     </div>
+      //   );
+      case "Paid courses":
+      return isLoadingEnrolled ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {Array(3)
+            .fill(0)
+            .map((_, i) => (
+              <div
+                key={i}
+                className="bg-white border rounded-[12px] p-4 shadow-sm animate-pulse"
               >
-                New
-              </button>
+                <div className="w-full h-48 bg-gray-300 rounded" />
+                <div className="p-4 space-y-3">
+                  <div className="h-5 bg-gray-300 rounded w-3/4" />
+                  <div className="h-4 bg-gray-200 rounded w-1/2" />
+                  <div className="h-4 bg-gray-200 rounded w-1/3" />
+                </div>
+              </div>
+            ))}
+        </div>
+      ) : enrolledCourses.length === 0 ? (
+        <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300">
+          <div className="w-28 h-28 mx-auto mb-6 bg-gray-200 border-4 border-dashed rounded-xl" />
+          <p className="text-xl font-semibold text-[#4B4B56]">No enrolled courses found</p>
+          <p className="text-[#95959F] mt-3 max-w-md mx-auto">
+            You haven’t enrolled in any courses yet. Explore the marketplace to start learning.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {enrolledCourses.map((course) => (
+            <Link href={`/courses/${course.id}`} key={course.id}>
+              <div className="bg-white border border-[#DBDBE3] rounded-[12px] overflow-hidden shadow-sm">
+                <Image
+                  src={
+                    course.image && !course.image.includes("example.com")
+                      ? course.image
+                      : "/assets/images/electrician.png"
+                  }
+                  alt={course.title}
+                  width={400}
+                  height={200}
+                  className="w-full h-48 object-cover"
+                  priority={false}
+                />
+                <div className="p-4">
+                  <h3 className="text-[16px] font-semibold text-[#32323E] mb-2">
+                    {course.title}
+                  </h3>
+                  <div className="flex justify-between items-center space-x-2 text-[14px] text-[#95959F] mb-2">
+                    <span>Skill Level: {course.level}</span>
+                    <span>{course.estimatedDuration}</span>
+                  </div>
+                  <p className="text-[16px] font-semibold text-[#32323E]">
+                    ₦{Number(course.price).toLocaleString()}
+                  </p>
+                </div>
+              </div>
             </Link>
+          ))}
+        </div>
+      );
+
+      case "Posted Courses":
+        return (
+          <>
+            {/* Popular Courses */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-[20px] font-semibold text-[#32323E]">
+                  Courses ({popularMyCourses.length})
+                </h2>
+                <div className="relative">
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="appearance-none px-4 py-2 bg-white dark:bg-white border border-gray-300 dark:border-gray-300 rounded-[12px] text-[14px] font-medium text-[#4B4B56] dark:text-[#4B4B56] hover:bg-gray-100 dark:hover:bg-gray-100 transition-colors pr-8"
+                  >
+                    <option value="">All</option>
+                    <option value="electrical">Electrical</option>
+                    <option value="plumbing">Plumbing</option>
+                    <option value="carpentry">Carpentry</option>
+                    {/* Add more categories as needed */}
+                  </select>
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 text-gray-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+              {isLoadingMyCourses ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {Array(3)
+                    .fill(0)
+                    .map((_, i) => (
+                      <div
+                        key={i}
+                        className="bg-white border rounded-[12px] p-4 shadow-sm animate-pulse"
+                      >
+                        <div className="w-full h-48 bg-gray-300 rounded" />
+                        <div className="p-4 space-y-3">
+                          <div className="h-5 bg-gray-300 rounded w-3/4" />
+                          <div className="h-4 bg-gray-200 rounded w-1/2" />
+                          <div className="h-4 bg-gray-200 rounded w-1/3" />
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              ) : popularMyCourses.length === 0 ? (
+                <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300">
+                  <div className="w-28 h-28 mx-auto mb-6 bg-gray-200 border-4 border-dashed rounded-xl" />
+                  <p className="text-xl font-semibold text-[#4B4B56]">No popular courses found</p>
+                  <p className="text-[#95959F] mt-3 max-w-md mx-auto">
+                    Try adjusting your search or check back later.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {popularMyCourses.map((course) => (
+                    <div key={course.id} className="relative"> {/* ← Key goes here */}
+                      <Link href={`/courses/${course.id}`}>
+                        <div className="bg-white dark:bg-white border border-[#DBDBE3] rounded-[12px] overflow-hidden shadow-sm">
+                          <Image
+                            src={
+                              course.image && !course.image.includes("example.com")
+                                ? course.image
+                                : "/assets/images/electrician.png"
+                            }
+                            alt={course.title}
+                            width={400}
+                            height={200}
+                            className="w-full h-48 object-cover"
+                            priority={false}
+                          />
+                          <div className="p-4">
+                            <h3 className="text-[16px] font-semibold text-[#32323E] mb-2">
+                              {course.title}
+                            </h3>
+                            <div className="flex justify-between items-center space-x-2 text-[14px] text-[#95959F] mb-2">
+                              <span>Skill Level: {course.level}</span>
+                              <span>{course.estimatedDuration}</span>
+                            </div>
+                            <p className="text-[16px] font-semibold text-[#32323E]">
+                              ₦{Number(course.price).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </Link>
+
+                      {/* Delete Icon */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleDeleteClick(course.id);
+                        }}
+                        className="absolute bottom-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-red-50 transition-colors cursor-pointer"
+                        aria-label="Delete course"
+                      >
+                        <Trash2 className="w-5 h-5 text-red-600" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen w-full bg-white dark:bg-white text-gray-900 dark:text-gray-900">
+      {/* Header */}
+      <Header title="Courses" />
+
+      {/* Main Content */}
+      <main className="px-6 py-4">
+        {/* Grow Your Career Section */}
+        <div className="flex flex-row sm:flex-row items-start sm:items-center justify-between mb-8 space-y-4 sm:space-y-0">
+          <h1 className="text-[20px] md:text-[24px] font-semibold text-[#32323E]">
+            Grow Your Career.
+          </h1>
+          <Link href="/courses/new-course">
+            <button className="px-4 md:px-6 py-3 bg-[#3900DC] text-white rounded-full text-[12px] md:text-[16px] font-medium hover:bg-purple-700 transition-colors cursor-pointer">
+              + Create new course
+            </button>
+          </Link>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex space-x-6 mb-8 border-b border-[#DBDBE3] pb-2 overflow-x-auto">
+          <button
+            className={`text-[16px] font-medium whitespace-nowrap cursor-pointer ${activeTab === "Marketplace" ? "text-[#32323E] border-b-2 border-[#3900DC]" : "text-[#4B4B56] hover:text-[#32323E]"}`}
+            onClick={() => setActiveTab("Marketplace")}
+          >
+            Marketplace
+          </button>
+          <button
+            className={`text-[16px] font-medium whitespace-nowrap cursor-pointer ${activeTab === "Paid courses" ? "text-[#32323E] border-b-2 border-[#3900DC]" : "text-[#4B4B56] hover:text-[#32323E]"}`}
+            onClick={() => setActiveTab("Paid courses")}
+          >
+            Paid courses
+          </button>
+          <button
+            className={`text-[16px] font-medium whitespace-nowrap cursor-pointer ${activeTab === "Posted Courses" ? "text-[#32323E] border-b-2 border-[#3900DC]" : "text-[#4B4B56] hover:text-[#32323E]"}`}
+            onClick={() => setActiveTab("Posted Courses")}
+          >
+            Posted Courses
+          </button>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative mb-8">
+          <Image
+            src="/assets/icons/searchIcon.png" // Replace with actual search icon path
+            alt="Search"
+            width={18}
+            height={18}
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 object-contain"
+          />
+          <input
+            type="text"
+            placeholder="What do you want to learn?"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-300 rounded-[12px] text-[16px] font-medium text-[#4B4B56] dark:text-[#4B4B56] focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+          <div className="absolute right-30 top-1/2 transform -translate-y-1/2 h-6 border-l border-[#3900DC]"></div>
+          <div className="absolute right-0 top-0 h-full w-[100px] flex items-center pr-3">
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="appearance-none w-full py-2 bg-transparent text-[14px] font-medium text-[#4B4B56] dark:text-[#4B4B56] hover:bg-gray-100 dark:hover:bg-gray-100 transition-colors"
+            >
+              <option value="">All</option>
+              <option value="electrical">Electrical</option>
+              <option value="plumbing">Plumbing</option>
+              <option value="carpentry">Carpentry</option>
+              {/* Add more categories as needed */}
+            </select>
+            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 text-gray-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </span>
           </div>
         </div>
 
-        <Table2
-          columns={userColumns as TableColumn<TableItem>[]}
-          data={filteredData as TableItem[]}
-          onAction={handleAction}
-          updateStatus={updateStatus}
-        />
-      </div>
-      <CustomModal
-        isOpen={confirmationModalOpen}
-        onClose={handleCloseConfirmation}
-        onConfirm={handleConfirm}
-        status={newStatus}
-        reason={reason}
-        setReason={setReason}
-        requestResubmission={requestResubmission}
-        setRequestResubmission={setRequestResubmission}
-      />
-      <SuccessModal
-        isOpen={successModalOpen}
-        onClose={handleCloseSuccess}
-        previousStatus={newStatus}
+        {renderContent()}
+      </main>
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setCourseToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Course"
+        message="Are you sure you want to delete this course? This action cannot be undone."
       />
     </div>
   );
 };
 
-export default CoursePage;
+export default CoursesPage;

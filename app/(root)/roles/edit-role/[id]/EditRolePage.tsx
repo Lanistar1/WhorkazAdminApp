@@ -49,16 +49,16 @@ const EditRolePage = ({ id }: { id: string }) => {
 }, [roleData]);
 
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
+ const handleChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+) => {
+  const { name, value } = e.target;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === "level" ? Number(value) : value,
-    }));
-  };
+  setFormData((prev) => ({
+    ...prev,
+    [name]: name === "level" ? Number(value) : value,
+  }));
+};
 
   const togglePermission = (id: string) => {
     setFormData((prev) => ({
