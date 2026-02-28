@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
-import { addDisbuteMessageType, AdminRole, AdminUsersResponse, approveCoursetype, approveKYCType, AssignRole, CourseDetailResponse, createAdminType, createCategoryType, CreateOnlineCoursePayload, CreatePhysicalCoursePayload, CreatePlanType, createServiceType, DashboardMetrics, GetCoursesResponse, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, Permission, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalytics, RevenueAnalyticsData, RevenueAnalyticsResponse, Role, Role1, RoleByIdResponse, RolesResponse, Service, ServiceAnalytics, ServiceApiResponse, updateCategoryType, updateCoursetype, updateDocVerificationType, updateRoleType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalytics, UserAnalyticsData, UserAnalyticsResponse, userBanStatusUpdateType, userProfile } from "./type";
+import { addDisbuteMessageType, AdminRole, AdminSettings, AdminUsersResponse1, approveCoursetype, approveKYCType, AssignRole, CourseDetailResponse, createAdminType, createCategoryType, CreateOnlineCoursePayload, CreatePhysicalCoursePayload, CreatePlanType, createServiceType, DashboardMetrics, GetCoursesResponse, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, Permission, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalyticsData, Role1, RoleByIdResponse, RolesResponse, Service, ServiceAnalytics, ServiceApiResponse, updateCategoryType, updateCoursetype, updateDocVerificationType, updateRoleType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalyticsData, userBanStatusUpdateType, userProfile } from "./type";
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -20,7 +21,7 @@ export const signIn = async (
 };
 
 //=====fetching Admin ========
-export const fetchAdmin = async (token: string): Promise<AdminUsersResponse> => {
+export const fetchAdmin = async (token: string): Promise<AdminUsersResponse1> => {
   const response = await axios.get(`${apiUrl}/api/v1/admin/admins`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -589,27 +590,32 @@ export const resetNotificationPreferences = async (token: string | null) => {
 };
 
 //=====fetching pending KYC ========
-// export const fetchPendingKYC = async (token: string): Promise<userProfile> => {
-//   const response = await axios.get(`${apiUrl}/api/v1/admin/kyc/pending?`, {
+// export const fetchPendingKYC = async (
+//   token: string,
+//   filters: { status?: string; priority?: string; keyword?: string; page?: number; limit?: number } = {}
+// ): Promise<PaginatedKYCResponse> => {
+//   const response = await axios.get(`${apiUrl}/api/v1/admin/kyc/pending`, {
 //     headers: {
 //       Authorization: `Bearer ${token}`,
 //     },
+//     params: filters, // pass filters + page + limit directly
 //   });
-//   return response.data.data; 
+
+//   return response.data.data; // data contains { users, page, limit, totalPages, total }
 // };
 
 export const fetchPendingKYC = async (
   token: string,
-  filters: { status?: string; priority?: string; keyword?: string; page?: number; limit?: number } = {}
+  filters: any = {}
 ): Promise<PaginatedKYCResponse> => {
   const response = await axios.get(`${apiUrl}/api/v1/admin/kyc/pending`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    params: filters, // pass filters + page + limit directly
+    headers: { Authorization: `Bearer ${token}` },
+    params: filters,
   });
 
-  return response.data.data; // data contains { users, page, limit, totalPages, total }
+  // The API returns { success, message, data: { users, pagination } }
+  // So we return response.data.data
+  return response.data.data;
 };
 
 
@@ -1009,5 +1015,40 @@ export const updateRole = async (data: updateRoleType, token: string | null, id:
       "Content-Type": "application/json",
     },
   });
+  return res.data;
+};
+
+
+// =========== update settings ============
+export const updateSettings = async (
+  data: AdminSettings,
+  token: string | null
+) => {
+  const res = await axios.put(
+    `${apiUrl}/api/v1/admin/settings`,
+    data,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return res.data;
+};
+
+
+
+export const getSettings = async (token: string | null) => {
+  const res = await axios.get(
+    `${apiUrl}/api/v1/admin/settings`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
   return res.data;
 };

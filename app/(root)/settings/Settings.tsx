@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/rules-of-hooks */
 'use client'
 import React, { useEffect, useState } from "react";
@@ -12,8 +13,12 @@ import {
 import Header from "@/components/Header";
 import Image from "next/image";
 import { useUpdateNotificationPreferences, useNotificationPreferences, useResetNotificationPreferences } from "@/app/actions/reactQuery";
-import { NotificationPreferencesType } from "@/app/actions/type";
+import { AdminSettings, NotificationPreferencesType } from "@/app/actions/type";
 import { useRouter } from "next/navigation"; 
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { useAuth } from "@/app/context/AuthContext";
 
 
 interface Field {
@@ -21,14 +26,235 @@ interface Field {
   value: string;
 }
 
+const Toggle = ({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: () => void;
+}) => (
+  <button
+    onClick={onChange}
+    className={`w-12 h-6 flex items-center rounded-full p-1 transition ${
+      checked ? "bg-[#3900DC]" : "bg-gray-300"
+    }`}
+  >
+    <div
+      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition ${
+        checked ? "translate-x-6" : ""
+      }`}
+    />
+  </button>
+);
+
 const SettingPage = () => {
   const router = useRouter();
-  
+  const { token } = useAuth();
+
   const { mutate: updatePreferences, isPending } = useUpdateNotificationPreferences();
   const { data, isLoading, isError, error } = useNotificationPreferences();
   const { mutate: resetServerPreferences, isPending: isResetting } = useResetNotificationPreferences();
 
-  // Set default tab to 'platform-policies' for easy testing/previewing
+  const mutation = useMutation({
+    mutationFn: async (data: AdminSettings) => {
+      const res = await axios.put(
+        "https://whorkaz.hordun.tech/api/v1/admin/settings",
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return res.data;
+    },
+    onSuccess: () => toast.success("Settings updated"),
+    onError: () => toast.error("Update failed"),
+  });
+
+  // const [settings, setSettings] = useState<AdminSettings>({
+  //   general: {
+  //     supportEmail: "",
+  //     supportPhoneNumber: "",
+  //     defaultCurrency: "NGN",
+  //     timeZone: "Africa/Lagos",
+  //     location: "Nigeria",
+  //     kycProvider: "manual",
+  //     kycProviders: [
+  //       {
+  //         id: "prembly",
+  //         name: "Prembly",
+  //         isActive: false,
+  //         apiKey: "",
+  //         apiUrl: "",
+  //       },
+  //       {
+  //         id: "youverify",
+  //         name: "YouVerify",
+  //         isActive: false,
+  //         apiKey: "",
+  //         apiUrl: "",
+  //       },
+  //     ],
+  //   },
+  //   payments: {
+  //     defaultPaymentGateway: "paystack",
+  //     paymentGateways: [
+  //       {
+  //         id: "paystack",
+  //         name: "Paystack",
+  //         isActive: true,
+  //         apiKey: "",
+  //         secretKey: "",
+  //         supportedCurrencies: ["NGN", "USD"],
+  //       },
+  //       {
+  //         id: "flutterwave",
+  //         name: "Flutterwave",
+  //         isActive: false,
+  //         apiKey: "",
+  //         secretKey: "",
+  //         supportedCurrencies: ["NGN"],
+  //       },
+  //     ],
+  //     withdrawCycle: "weekly",
+  //     marketplaceCommissionRate: 5,
+  //     minimumWithdrawAmount: 1000,
+  //     jobPostingFee: 200,
+  //     jobPostingFeeEnabled: true,
+  //     jobPostingFeeMode: "per_job",
+  //     jobCommissionRateTier1: 15,
+  //     jobCommissionRateTier2: 10,
+  //     jobCommissionTierThreshold: 50000,
+  //     courseCommissionRate: 20,
+  //     trainingPartnerAnnualFee: 20000,
+  //     trainingPartnerFreeYears: 1,
+  //     freeWeeklyJobViewLimit: 5,
+  //     basicMonthlyBidLimit: 15,
+  //     proMonthlyBidLimit: -1,
+  //   },
+  //   preferences: {
+  //     notificationPreferences: {
+  //       newUserRegistration: true,
+  //       kycPending: true,
+  //       newDisputeRaised: true,
+  //       paymentFailed: true,
+  //     },
+  //     alertTypes: {
+  //       email: true,
+  //       inDashboardAlerts: true,
+  //     },
+  //   },
+  //   platformPolicies: {
+  //     termsOfService: "",
+  //     privacyPolicy: "",
+  //     refundPolicy: "",
+  //     communityGuidelines: "",
+  //   },
+  //   accessActivity: {
+  //     platformStatus: "active",
+  //     twoFactorAuthentication: true,
+  //     limitLoginAttempts: true,
+  //     maxLoginAttempts: 5,
+  //   },
+  // });
+  
+
+const [settings, setSettings] = useState<AdminSettings>({
+  general: {
+    supportEmail: "support@whorkaz.com",
+    supportPhoneNumber: "+2341234567890",
+    defaultCurrency: "NGN",
+    timeZone: "Africa/Lagos",
+    location: "Nigeria",
+    kycProvider: "manual",
+    kycProviders: [
+      {
+        id: "prembly",
+        name: "Prembly",
+        isActive: true,
+        apiKey: "",
+        apiUrl: "https://api.prembly.com",
+      },
+      {
+        id: "youverify",
+        name: "YouVerify",
+        isActive: false,
+        apiKey: "",
+        apiUrl: "https://api.sandbox.youverify.co",
+      },
+    ],
+  },
+  payments: {
+    defaultPaymentGateway: "paystack",
+    paymentGateways: [
+      {
+        id: "paystack",
+        name: "Paystack",
+        isActive: true,
+        apiKey: "",
+        secretKey: "",
+        supportedCurrencies: ["NGN", "USD"],
+      },
+      {
+        id: "flutterwave",
+        name: "Flutterwave",
+        isActive: true,
+        apiKey: "",
+        secretKey: "",
+        supportedCurrencies: ["NGN", "GHS", "KES"],
+      },
+      {
+        id: "nowpayments",
+        name: "NOWPayments",
+        isActive: true,
+        apiKey: "",
+        secretKey: "",
+        supportedCurrencies: ["USD", "USDT", "USDC", "BTC", "ETH", "TRX", "BNB"],
+      },
+    ],
+    withdrawCycle: "weekly",
+    marketplaceCommissionRate: 5.00,
+    minimumWithdrawAmount: 1000.00,
+    jobPostingFee: 200.00,
+    jobPostingFeeEnabled: true,
+    jobPostingFeeMode: "per_job",
+    jobCommissionRateTier1: 15.00,
+    jobCommissionRateTier2: 10.00,
+    jobCommissionTierThreshold: 50000.00,
+    courseCommissionRate: 20.00,
+    trainingPartnerAnnualFee: 20000.00,
+    trainingPartnerFreeYears: 1,
+    freeWeeklyJobViewLimit: 5,
+    basicMonthlyBidLimit: 15,
+    proMonthlyBidLimit: -1,
+  },
+  preferences: {
+    notificationPreferences: {
+      newUserRegistration: true,
+      kycPending: true,
+      newDisputeRaised: true,
+      paymentFailed: true,
+    },
+    alertTypes: {
+      email: true,
+      inDashboardAlerts: true,
+    },
+  },
+  platformPolicies: {
+    termsOfService: "",
+    privacyPolicy: "",
+    refundPolicy: "",
+    communityGuidelines: "",
+  },
+  accessActivity: {
+    platformStatus: "active",
+    twoFactorAuthentication: true,
+    limitLoginAttempts: true,
+    maxLoginAttempts: 5,
+  },
+});
+  
   const [activeTab, setActiveTab] = useState('platform-policies'); 
   const [editingField, setEditingField] = useState<string | null>(null);
   const [fields, setFields] = useState<Field[]>([
@@ -219,6 +445,11 @@ const [preferences, setPreferences] = useState<NotificationPreferencesType>({
     { id: 'platform-policies', name: 'Platform Policies', icon: <Headphones className="h-5 w-5" /> },
     { id: 'access', name: 'Access & Activity', icon: <BadgeCheck className="h-5 w-5" /> },
   ];
+
+
+  
+
+  
 
   const renderContent = () => {
     // 1. Account tab (General Settings) - Untouched
@@ -802,13 +1033,599 @@ const [preferences, setPreferences] = useState<NotificationPreferencesType>({
 
 
     // 5. Default for Access & Activity
-    if (activeTab === 'access') {
-        return (
-            <div className="flex-1 flex items-center justify-center p-10 md:ml-10 bg-white md:w-[600px] border rounded-lg shadow-sm">
-                <div className="text-[18px] font-semibold text-[#32323E]">Coming Soon</div>
+  //   if (activeTab === 'access') {
+  //       return (
+  //   <div className="bg-[#F9FAFB] min-h-screen p-10">
+  //     <div className="max-w-6xl mx-auto space-y-10">
+
+  //       {/* HEADER */}
+  //       <div>
+  //         <h1 className="text-3xl font-semibold text-[#111827]">
+  //           Platform Settings
+  //         </h1>
+  //         <p className="text-gray-500 mt-1">
+  //           Configure KYC, Payments, Security and Platform behaviour.
+  //         </p>
+  //       </div>
+
+  //       {/* ================= GENERAL CARD ================= */}
+  //       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-8">
+
+  //         <h2 className="text-xl font-semibold text-gray-800">
+  //           General Configuration
+  //         </h2>
+
+  //         <div className="grid md:grid-cols-2 gap-6">
+  //           <div>
+  //             <label className="label">Support Email</label>
+  //             <input
+  //               className="input"
+  //               value={settings.general.supportEmail}
+  //               onChange={(e) =>
+  //                 setSettings(prev => ({
+  //                   ...prev,
+  //                   general: {
+  //                     ...prev.general,
+  //                     supportEmail: e.target.value,
+  //                   },
+  //                 }))
+  //               }
+  //             />
+  //           </div>
+
+  //           <div>
+  //             <label className="label">Support Phone</label>
+  //             <input
+  //               className="input"
+  //               value={settings.general.supportPhoneNumber}
+  //               onChange={(e) =>
+  //                 setSettings(prev => ({
+  //                   ...prev,
+  //                   general: {
+  //                     ...prev.general,
+  //                     supportPhoneNumber: e.target.value,
+  //                   },
+  //                 }))
+  //               }
+  //             />
+  //           </div>
+  //         </div>
+
+  //         {/* KYC PROVIDER SELECT */}
+  //         <div>
+  //           <label className="label">Default KYC Method</label>
+  //           <select
+  //             className="input"
+  //             value={settings.general.kycProvider}
+  //             onChange={(e) =>
+  //               setSettings(prev => ({
+  //                 ...prev,
+  //                 general: {
+  //                   ...prev.general,
+  //                   kycProvider: e.target.value,
+  //                 },
+  //               }))
+  //             }
+  //           >
+  //             <option value="manual">Manual</option>
+  //             {settings.general.kycProviders.map(p => (
+  //               <option key={p.id} value={p.id}>
+  //                 {p.name}
+  //               </option>
+  //             ))}
+  //           </select>
+  //         </div>
+
+  //         {/* KYC PROVIDER CARDS */}
+  //         <div className="space-y-5">
+  //           {settings.general.kycProviders.map((provider, index) => (
+  //             <div
+  //               key={provider.id}
+  //               className="border border-gray-200 rounded-xl p-6 bg-gray-50 space-y-4"
+  //             >
+  //               <div className="flex justify-between items-center">
+  //                 <div>
+  //                   <h3 className="font-medium text-gray-800">
+  //                     {provider.name}
+  //                   </h3>
+  //                   <p className="text-sm text-gray-500">
+  //                     API URL: {provider.apiUrl}
+  //                   </p>
+  //                 </div>
+
+  //                 <Toggle
+  //                   checked={provider.isActive}
+  //                   onChange={() => {
+  //                     const updated = [...settings.general.kycProviders];
+  //                     updated[index].isActive =
+  //                       !updated[index].isActive;
+
+  //                     setSettings(prev => ({
+  //                       ...prev,
+  //                       general: {
+  //                         ...prev.general,
+  //                         kycProviders: updated,
+  //                       },
+  //                     }));
+  //                   }}
+  //                 />
+  //               </div>
+
+  //               {provider.isActive && (
+  //                 <input
+  //                   placeholder="API Key"
+  //                   className="input"
+  //                   value={provider.apiKey}
+  //                   onChange={(e) => {
+  //                     const updated = [...settings.general.kycProviders];
+  //                     updated[index].apiKey = e.target.value;
+
+  //                     setSettings(prev => ({
+  //                       ...prev,
+  //                       general: {
+  //                         ...prev.general,
+  //                         kycProviders: updated,
+  //                       },
+  //                     }));
+  //                   }}
+  //                 />
+  //               )}
+  //             </div>
+  //           ))}
+  //         </div>
+  //       </div>
+
+  //       {/* ================= SECURITY CARD ================= */}
+  //       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-6">
+
+  //         <h2 className="text-xl font-semibold text-gray-800">
+  //           Security & Access
+  //         </h2>
+
+  //         <div className="flex justify-between items-center">
+  //           <div>
+  //             <p className="font-medium text-gray-700">
+  //               Platform Status
+  //             </p>
+  //             <p className="text-sm text-gray-500">
+  //               Disable platform access globally
+  //             </p>
+  //           </div>
+
+  //           <select
+  //             className="input w-40"
+  //             value={settings.accessActivity.platformStatus}
+  //             onChange={(e) =>
+  //               setSettings(prev => ({
+  //                 ...prev,
+  //                 accessActivity: {
+  //                   ...prev.accessActivity,
+  //                   platformStatus: e.target.value as "active" | "inactive",
+  //                 },
+  //               }))
+  //             }
+  //           >
+  //             <option value="active">Active</option>
+  //             <option value="inactive">Inactive</option>
+  //           </select>
+  //         </div>
+
+  //         <div className="flex justify-between items-center">
+  //           <span className="font-medium text-gray-700">
+  //             Two Factor Authentication
+  //           </span>
+  //           <Toggle
+  //             checked={settings.accessActivity.twoFactorAuthentication}
+  //             onChange={() =>
+  //               setSettings(prev => ({
+  //                 ...prev,
+  //                 accessActivity: {
+  //                   ...prev.accessActivity,
+  //                   twoFactorAuthentication:
+  //                     !prev.accessActivity.twoFactorAuthentication,
+  //                 },
+  //               }))
+  //             }
+  //           />
+  //         </div>
+  //       </div>
+
+  //       {/* SAVE BUTTON */}
+  //       <div className="flex justify-end">
+  //         <button
+  //           onClick={() => mutation.mutate(settings)}
+  //           className="px-10 py-3 bg-[#3900DC] text-white rounded-xl shadow-md hover:bg-[#2E00B3] transition-all"
+  //         >
+  //           Save All Changes
+  //         </button>
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
+  //   }
+
+  if (activeTab === 'access') {
+  return (
+    <div className="md:ml-10 bg-gray-50 md:w-[800px] rounded-lg mt-5 p-6 overflow-y-auto max-h-[80vh]">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 space-y-12">
+
+        {/* ========================================= */}
+        {/*              GENERAL SETTINGS             */}
+        {/* ========================================= */}
+        <section className="space-y-6">
+          <h2 className="text-2xl font-semibold text-gray-800 border-b pb-2">General Platform Settings</h2>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Support Email</label>
+              <input
+                type="email"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3900DC]"
+                value={settings.general.supportEmail}
+                onChange={e => setSettings(p => ({ ...p, general: { ...p.general, supportEmail: e.target.value } }))}
+              />
             </div>
-        );
-    }
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Support Phone Number</label>
+              <input
+                type="tel"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3900DC]"
+                value={settings.general.supportPhoneNumber}
+                onChange={e => setSettings(p => ({ ...p, general: { ...p.general, supportPhoneNumber: e.target.value } }))}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Default Currency</label>
+              <select
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3900DC]"
+                value={settings.general.defaultCurrency}
+                onChange={e => setSettings(p => ({ ...p, general: { ...p.general, defaultCurrency: e.target.value } }))}
+              >
+                <option value="NGN">NGN (₦)</option>
+                <option value="USD">$ USD</option>
+                <option value="GHS">₵ GHS</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Time Zone</label>
+              <input
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3900DC]"
+                value={settings.general.timeZone}
+                onChange={e => setSettings(p => ({ ...p, general: { ...p.general, timeZone: e.target.value } }))}
+                placeholder="Africa/Lagos"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Platform Location (Country)</label>
+              <input
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3900DC]"
+                value={settings.general.location}
+                onChange={e => setSettings(p => ({ ...p, general: { ...p.general, location: e.target.value } }))}
+              />
+            </div>
+          </div>
+
+          {/* KYC Providers */}
+          <div className="pt-4 border-t">
+            <h3 className="text-xl font-medium mb-4">KYC Providers</h3>
+            <div className="space-y-1.5">
+  <label className="block text-sm font-medium text-gray-700">Default KYC Verification Method</label>
+  <select
+    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3900DC] focus:border-[#3900DC]"
+    value={settings.general.kycProvider}
+    onChange={e => setSettings(p => ({
+      ...p,
+      general: { ...p.general, kycProvider: e.target.value }
+    }))}
+  >
+    <option value="manual">Manual Review (admin checks documents)</option>
+    <option value="prembly" disabled={!settings.general.kycProviders.find(p => p.id === "prembly")?.isActive}>
+      Prembly (automated)
+    </option>
+    <option value="youverify" disabled={!settings.general.kycProviders.find(p => p.id === "youverify")?.isActive}>
+      YouVerify (automated)
+    </option>
+  </select>
+  <p className="text-xs text-gray-500">
+    {settings.general.kycProvider === "manual"
+      ? "Users will upload documents — admins review manually."
+      : `Using automated verification via ${settings.general.kycProvider === "prembly" ? "Prembly" : "YouVerify"}`}
+  </p>
+</div>
+            <div className="space-y-6">
+              {settings.general.kycProviders.map((provider, idx) => (
+                <div key={provider.id} className="border rounded-xl p-5 bg-gray-50 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h4 className="font-semibold">{provider.name}</h4>
+                      <p className="text-sm text-gray-500">{provider.apiUrl || "No API URL set"}</p>
+                    </div>
+                    <Toggle
+                      checked={provider.isActive}
+                      onChange={() => {
+                        const updated = [...settings.general.kycProviders];
+                        updated[idx].isActive = !updated[idx].isActive;
+                        setSettings(p => ({ ...p, general: { ...p.general, kycProviders: updated } }));
+                      }}
+                    />
+                  </div>
+
+                  {provider.isActive && (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1.5">API Key</label>
+                        <input
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                          value={provider.apiKey}
+                          onChange={e => {
+                            const updated = [...settings.general.kycProviders];
+                            updated[idx].apiKey = e.target.value;
+                            setSettings(p => ({ ...p, general: { ...p.general, kycProviders: updated } }));
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1.5">API URL</label>
+                        <input
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                          value={provider.apiUrl}
+                          onChange={e => {
+                            const updated = [...settings.general.kycProviders];
+                            updated[idx].apiUrl = e.target.value;
+                            setSettings(p => ({ ...p, general: { ...p.general, kycProviders: updated } }));
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================= */}
+        {/*              PAYMENTS SECTION             */}
+        {/* ========================================= */}
+        <section className="space-y-6 pt-8 border-t">
+          <h2 className="text-2xl font-semibold text-gray-800">Payments & Commission Settings</h2>
+
+          <div className="space-y-8">
+
+            {/* Default Gateway */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Default Payment Gateway</label>
+              <select
+                className="w-full md:w-64 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3900DC]"
+                value={settings.payments.defaultPaymentGateway}
+                onChange={e => setSettings(p => ({
+                  ...p,
+                  payments: { ...p.payments, defaultPaymentGateway: e.target.value }
+                }))}
+              >
+                <option value="paystack">Paystack</option>
+                <option value="flutterwave">Flutterwave</option>
+                <option value="nowpayments">NOWPayments</option>
+              </select>
+            </div>
+
+            {/* Payment Gateways List */}
+            <div className="space-y-6">
+              <h3 className="text-xl font-medium">Configured Gateways</h3>
+              {settings.payments.paymentGateways.map((gw, idx) => (
+                <div key={gw.id} className="border rounded-xl p-6 bg-gray-50 space-y-5">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-lg font-semibold">{gw.name}</h4>
+                    <Toggle
+                      checked={gw.isActive}
+                      onChange={() => {
+                        const updated = [...settings.payments.paymentGateways];
+                        updated[idx].isActive = !updated[idx].isActive;
+                        setSettings(p => ({ ...p, payments: { ...p.payments, paymentGateways: updated } }));
+                      }}
+                    />
+                  </div>
+
+                  {gw.isActive && (
+                    <div className="grid md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1.5">Public / API Key</label>
+                        <input
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                          value={gw.apiKey}
+                          onChange={e => {
+                            const updated = [...settings.payments.paymentGateways];
+                            updated[idx].apiKey = e.target.value;
+                            setSettings(p => ({ ...p, payments: { ...p.payments, paymentGateways: updated } }));
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1.5">Secret Key</label>
+                        <input
+                          type="password"
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                          value={gw.secretKey}
+                          onChange={e => {
+                            const updated = [...settings.payments.paymentGateways];
+                            updated[idx].secretKey = e.target.value;
+                            setSettings(p => ({ ...p, payments: { ...p.payments, paymentGateways: updated } }));
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="text-sm text-gray-600">
+                    Supported: {gw.supportedCurrencies.join(", ")}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Commission & Limits */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 border-t">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Marketplace Commission (%)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                  value={settings.payments.marketplaceCommissionRate}
+                  onChange={e => setSettings(p => ({
+                    ...p,
+                    payments: { ...p.payments, marketplaceCommissionRate: Number(e.target.value) }
+                  }))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Minimum Withdrawal (₦)</label>
+                <input
+                  type="number"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                  value={settings.payments.minimumWithdrawAmount}
+                  onChange={e => setSettings(p => ({
+                    ...p,
+                    payments: { ...p.payments, minimumWithdrawAmount: Number(e.target.value) }
+                  }))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Withdraw Cycle</label>
+                <select
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                  value={settings.payments.withdrawCycle}
+                  onChange={e => setSettings(p => ({
+                    ...p,
+                    payments: { ...p.payments, withdrawCycle: e.target.value }
+                  }))}
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly">Bi-weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Job Posting Fee (₦)</label>
+                <input
+                  type="number"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                  value={settings.payments.jobPostingFee}
+                  onChange={e => setSettings(p => ({
+                    ...p,
+                    payments: { ...p.payments, jobPostingFee: Number(e.target.value) }
+                  }))}
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-6">
+                <input
+                  type="checkbox"
+                  checked={settings.payments.jobPostingFeeEnabled}
+                  onChange={() => setSettings(p => ({
+                    ...p,
+                    payments: { ...p.payments, jobPostingFeeEnabled: !p.payments.jobPostingFeeEnabled }
+                  }))}
+                  className="w-5 h-5 text-[#3900DC] rounded"
+                />
+                <label className="text-sm font-medium">Enable Job Posting Fee</label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================= */}
+        {/*           SECURITY / ACCESS CONTROL       */}
+        {/* ========================================= */}
+        <section className="space-y-6 pt-10 border-t">
+          <h2 className="text-2xl font-semibold text-gray-800">Security & Access Control</h2>
+
+          <div className="space-y-5">
+            <div className="flex justify-between items-center py-3">
+              <div>
+                <p className="font-medium">Platform Status</p>
+                <p className="text-sm text-gray-500">Globally enable/disable access</p>
+              </div>
+              <select
+                className="w-48 px-4 py-2.5 border rounded-lg"
+                value={settings.accessActivity.platformStatus}
+                onChange={e => setSettings(p => ({
+                  ...p,
+                  accessActivity: { ...p.accessActivity, platformStatus: e.target.value as any }
+                }))}
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive / Maintenance</option>
+              </select>
+            </div>
+
+            <div className="flex justify-between items-center py-3">
+              <span className="font-medium">Force Two-Factor Authentication</span>
+              <Toggle
+                checked={settings.accessActivity.twoFactorAuthentication}
+                onChange={() => setSettings(p => ({
+                  ...p,
+                  accessActivity: { ...p.accessActivity, twoFactorAuthentication: !p.accessActivity.twoFactorAuthentication }
+                }))}
+              />
+            </div>
+
+            <div className="flex justify-between items-center py-3">
+              <div>
+                <p className="font-medium">Limit Login Attempts</p>
+                <p className="text-sm text-gray-500">After limit → temporary lockout</p>
+              </div>
+              <Toggle
+                checked={settings.accessActivity.limitLoginAttempts}
+                onChange={() => setSettings(p => ({
+                  ...p,
+                  accessActivity: { ...p.accessActivity, limitLoginAttempts: !p.accessActivity.limitLoginAttempts }
+                }))}
+              />
+            </div>
+
+            {settings.accessActivity.limitLoginAttempts && (
+              <div className="pl-10">
+                <label className="block text-sm font-medium mb-1.5">Max failed attempts</label>
+                <input
+                  type="number"
+                  min={3}
+                  max={15}
+                  className="w-24 px-4 py-2.5 border rounded-lg"
+                  value={settings.accessActivity.maxLoginAttempts}
+                  onChange={e => setSettings(p => ({
+                    ...p,
+                    accessActivity: { ...p.accessActivity, maxLoginAttempts: Number(e.target.value) }
+                  }))}
+                />
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* SAVE */}
+        <div className="flex justify-end pt-10 border-t sticky bottom-0 bg-white py-4 -mx-8 px-8 shadow-[0_-4px_10px_-4px_rgba(0,0,0,0.1)]">
+          <button
+            onClick={() => mutation.mutate(settings)}
+            disabled={mutation.isPending}
+            className="px-12 py-3.5 bg-[#3900DC] text-white rounded-xl font-medium hover:bg-[#2E00B3] disabled:opacity-60 transition"
+          >
+            {mutation.isPending ? "Saving..." : "Save All Platform Settings"}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+}
   };
 
   return (

@@ -28,17 +28,28 @@ const CreateRolePage = () => {
 
 
   // ✅ Reusable Input Handler
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const { name, value } = e.target;
+//   const handleChange = (
+//     e: React.ChangeEvent<HTMLInputElement>
+//   ) => {
+//     const { name, value } = e.target;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        name === "level" ? Number(value) : value,
-    }));
-  };
+//     setFormData((prev) => ({
+//       ...prev,
+//       [name]:
+//         name === "level" ? Number(value) : value,
+//     }));
+//   };
+
+const handleChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+) => {
+  const { name, value } = e.target;
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: name === "level" ? Number(value) : value,
+  }));
+};
 
   // ✅ Toggle Permission
   const togglePermission = (id: string) => {

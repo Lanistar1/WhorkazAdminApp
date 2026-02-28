@@ -55,7 +55,7 @@ const CustomInputField: React.FC<InputFieldProps> = ({
           onChange={onChange}
           required={required}
           disabled={disabled}
-          className={`h-12 w-full rounded-[12px] border border-zinc-200 bg-white px-4 pr-10 text-[15px] outline-none focus:border-[#3900DC] ${
+          className={`h-12 w-full text-[#222222] rounded-[12px] border border-zinc-200 bg-white px-4 pr-10 text-[15px] outline-none focus:border-[#3900DC] ${
             LeftIcon ? "pl-10" : ""
           } ${disabled ? "bg-zinc-100 cursor-not-allowed" : ""}`}
         />

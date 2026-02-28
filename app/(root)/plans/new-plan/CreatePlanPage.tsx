@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState } from "react";
@@ -38,7 +39,8 @@ const CreatePlanPage = () => {
         price: Number(formData.price),
         currency: formData.currency as "NGN",
         interval: formData.interval as "monthly" | "yearly",
-        planType: formData.planType as "workman" | "both",
+        // ✅ Allow formData.planType to pass its value directly
+        planType: formData.planType as any, 
         features: formData.features
           .split(",")
           .map((f) => f.trim())
@@ -130,8 +132,8 @@ const CreatePlanPage = () => {
                       onChange={handleChange}
                       required
                       options={[
-                        { label: "workman", value: "Workman" },
-                        { label: "client", value: "Client" },
+                        { label: "Workman", value: "workman" }, // Value sent to API: "workman"
+                        { label: "Client", value: "client" },   // Value sent to API: "client"
                       ]}
                     />
 

@@ -613,24 +613,57 @@ export interface PaymentsAPIResponse {
 
 
 //========== get KYC typescript ============
-export type KYCStatus = 'approve' | 'reject' | 'resubmit';
+// export type KYCStatus = 'approve' | 'reject' | 'resubmit';
 
+// export interface KYCItem {
+//   id: string | number;
+//   name: string;
+//   doc: string;
+//   role: string;
+//   status: KYCStatus;
+//   date: string;
+// }
+
+export type KYCStatus = "pending" | "approved" | "rejected";
+
+// This is what the Table uses
 export interface KYCItem {
-  id: string | number;
+  id: string;
   name: string;
   doc: string;
   role: string;
   status: KYCStatus;
   date: string;
+  [key: string]: any; // Allow for table compatibility
 }
 
-export interface PaginatedKYCResponse {
-  users: KYCItem[];
+// ================= BACKEND SPECIFIC TYPES =================
+export interface BackendKYCUser {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  kycVerificationStatus: KYCStatus;
+  kycType: string | null;
+  userType: string;
+  createdAt: string;
+  // ... add other fields if you need them for "View Details"
+}
+
+export interface PaginationMeta {
   page: number;
   limit: number;
-  totalPages: number;
   total: number;
+  totalPages: number;
+  currentPage: number;
 }
+
+// THE ACTUAL API RESPONSE WRAPPER
+export interface PaginatedKYCResponse {
+  users: BackendKYCUser[]; // Must match the "users" key in your JSON
+  pagination: PaginationMeta;
+}
+
 
 
 // ============= typescript for report and analysis ==========
@@ -1052,4 +1085,202 @@ export type AdminUsersResponse1 = {
     admins: AdminUser[];
     pagination: Pagination;
   };
+}
+
+
+
+
+// =========== Settings Payload ===========
+// export type SettingsPayload = {
+//   general: {
+//     supportEmail: string;
+//     supportPhoneNumber: string;
+//     defaultCurrency: string;
+//     timeZone: string;
+//     location: string;
+//     kycProvider: string;
+
+//     kycProviders: {
+//       id: string;
+//       name: string;
+//       isActive: boolean;
+//       apiKey: string;
+//       apiUrl: string;
+//     }[];
+//   };
+
+//   payments: {
+//     defaultPaymentGateway: string;
+
+//     paymentGateways: {
+//       id: string;
+//       name: string;
+//       isActive: boolean;
+//       apiKey: string;
+//       secretKey: string;
+//       supportedCurrencies: string[];
+//     }[];
+
+//     withdrawCycle: "weekly" | "monthly";
+//     marketplaceCommissionRate: number;
+//     minimumWithdrawAmount: number;
+//     jobPostingFee: number;
+//     jobPostingFeeEnabled: boolean;
+//     jobPostingFeeMode: "per_job" | "one_time";
+
+//     jobCommissionRateTier1: number;
+//     jobCommissionRateTier2: number;
+//     jobCommissionTierThreshold: number;
+
+//     courseCommissionRate: number;
+//     trainingPartnerAnnualFee: number;
+//     trainingPartnerFreeYears: number;
+
+//     freeWeeklyJobViewLimit: number;
+//     basicMonthlyBidLimit: number;
+//     proMonthlyBidLimit: number;
+//   };
+
+//   preferences: {
+//     notificationPreferences: {
+//       newUserRegistration: boolean;
+//       kycPending: boolean;
+//       newDisputeRaised: boolean;
+//       paymentFailed: boolean;
+//     };
+
+//     alertTypes: {
+//       email: boolean;
+//       inDashboardAlerts: boolean;
+//     };
+//   };
+
+//   platformPolicies: {
+//     termsOfService: string;
+//     privacyPolicy: string;
+//     refundPolicy: string;
+//     communityGuidelines: string;
+//   };
+
+//   accessActivity: {
+//     platformStatus: "active" | "inactive";
+//     twoFactorAuthentication: boolean;
+//     limitLoginAttempts: boolean;
+//     maxLoginAttempts: number;
+//   };
+// };
+
+
+
+// types/admin-settings.ts
+
+export type KycProvider = {
+  id: string;
+  name: string;
+  isActive: boolean;
+  apiKey: string;
+  apiUrl: string;
+};
+
+export type PaymentGateway = {
+  id: string;
+  name: string;
+  isActive: boolean;
+  apiKey: string;
+  secretKey: string;
+  supportedCurrencies: string[];
+};
+
+export type AdminSettings = {
+  general: {
+    supportEmail: string;
+    supportPhoneNumber: string;
+    defaultCurrency: string;
+    timeZone: string;
+    location: string;
+    kycProvider: string;
+    kycProviders: KycProvider[];
+  };
+
+  payments: {
+    defaultPaymentGateway: string;
+    paymentGateways: PaymentGateway[];
+    withdrawCycle: string;
+    marketplaceCommissionRate: number;
+    minimumWithdrawAmount: number;
+    jobPostingFee: number;
+    jobPostingFeeEnabled: boolean;
+    jobPostingFeeMode: "per_job" | "one_time";
+    jobCommissionRateTier1: number;
+    jobCommissionRateTier2: number;
+    jobCommissionTierThreshold: number;
+    courseCommissionRate: number;
+    trainingPartnerAnnualFee: number;
+    trainingPartnerFreeYears: number;
+    freeWeeklyJobViewLimit: number;
+    basicMonthlyBidLimit: number;
+    proMonthlyBidLimit: number;
+  };
+
+  preferences: {
+    notificationPreferences: {
+      newUserRegistration: boolean;
+      kycPending: boolean;
+      newDisputeRaised: boolean;
+      paymentFailed: boolean;
+    };
+    alertTypes: {
+      email: boolean;
+      inDashboardAlerts: boolean;
+    };
+  };
+
+  platformPolicies: {
+    termsOfService: string;
+    privacyPolicy: string;
+    refundPolicy: string;
+    communityGuidelines: string;
+  };
+
+  accessActivity: {
+    platformStatus: "active" | "inactive";
+    twoFactorAuthentication: boolean;
+    limitLoginAttempts: boolean;
+    maxLoginAttempts: number;
+  };
+};
+
+
+// ===== KYC detail TYPES =====
+export interface KYCDocument {
+  id: string;
+  type: string;
+  name: string;
+  url: string;
+  verified: boolean;
+  uploaded_at: string;
+}
+
+export interface KYCUserInfo {
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  phone: string | null;
+  date_of_birth: string | null;
+}
+
+export interface KYCApplication {
+  id: string;
+  user_id: string;
+  status: string;
+  rejection_reason: string | null;
+  kyc_type: string;
+  submitted_at: string;
+  updated_at: string;
+  user_info: KYCUserInfo;
+  documents: KYCDocument[];
+}
+
+export interface GetKYCDetailResponse {
+  application: KYCApplication;
 }
