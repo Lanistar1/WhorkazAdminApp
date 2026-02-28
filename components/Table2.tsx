@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 
 // Define a generic column interface
-interface TableColumn<T> {
+export interface TableColumn<T> {
   key: keyof T | string;
   label: string;
   render?: (

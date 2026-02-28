@@ -81,27 +81,27 @@ const RoleDetailPage = () => {
 
         <div className="bg-white p-6 rounded-2xl shadow-sm border">
           <p className="text-gray-500 text-sm">Role Type</p>
-          <p className="font-semibold capitalize">
+          <p className="font-semibold capitalize text-[#222222]">
             {role.roleType.replace("_", " ")}
           </p>
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow-sm border">
-          <p className="text-gray-500 text-sm flex items-center gap-2">
+          <p className="text-gray-500 text-sm flex items-center gap-2 text-[#222222]">
             <Layers size={16} />
             Level
           </p>
-          <p className="text-2xl font-bold">
+          <p className="text-2xl font-bold text-[#222222]">
             {role.metadata?.level}
           </p>
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow-sm border">
-          <p className="text-gray-500 text-sm flex items-center gap-2">
+          <p className="text-gray-500 text-sm flex items-center gap-2 text-[#222222]">
             <Calendar size={16} />
             Created
           </p>
-          <p className="font-medium">
+          <p className="font-medium text-[#222222]">
             {new Date(role.createdAt).toLocaleDateString()}
           </p>
         </div>
@@ -125,7 +125,7 @@ const RoleDetailPage = () => {
               {groupedPermissions[category].map((perm: any) => (
                 <div
                   key={perm.id}
-                  className="px-4 py-2 bg-gray-100 rounded-full text-sm font-medium hover:bg-gray-200 transition"
+                  className="px-4 text-[#222222] py-2 bg-gray-100 rounded-full text-sm font-medium hover:bg-gray-200 transition"
                 >
                   {perm.displayName}
                 </div>

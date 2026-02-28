@@ -3,8 +3,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { toast } from "react-toastify";
-import { approveCourse, approveKYC, assignRoles, createAdmin, createCategory, createOnlineCourse, createPhysicalCourse, createPlan, createRoles, createService, declineKYC, deleteAdminById, deleteCategoryById, deleteRoleById, deleteServiceById, disputeMessage, exportAnalyticReport, fetchAdmin, fetchAdminActivity, fetchAdminById, fetchAdminProfile, fetchCategory, fetchCategoryById, fetchCourseById, fetchCourses, fetchDashboardGeographicDistribution, fetchDashboardMetric, fetchDashboardRevenueTrends, fetchDashboardServiceCategories, fetchDashboardTopPerformingProviders, fetchDashboardUserGrowth, fetchDisbuteDetailById, fetchDisbuteList, fetchKYCDetailById, fetchNotificationPreferences, fetchPendingKYC, fetchPermissionList, fetchRevenueAnalysis, fetchRoleById, fetchRoleOnlyById, fetchRolesList, fetchService, fetchServiceAnalysis, fetchServiceById, fetchSubscriptionList, fetchTransactionDetailById, fetchTransactionList, fetchUserAnalysis, fetchUserById, fetchUsers, fetchWalletDetailById, fetchWalletList, rejectCourse, removeRoles, resetNotificationPreferences, resolveDispute, signIn, updateAdminProfile, updateCategory, updateCourse, updateKYCDoc, updateNotificationPreferences, updateRole, updateService, updateUserProfile, updateUserStatus, userBanStatus } from "./api";
-import { addDisbuteMessageType, Admin_Query_Keys, AdminRole, AdminUsersResponse, AdminUsersResponse1, approveCoursetype, approveKYCType, AssignRole, CourseDetail, createAdminType, createCategoryType, CreatePlanType, createServiceType, DashboardMetrics, GetCoursesResponse, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, Permission, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalytics, RevenueAnalyticsData, RevenueAnalyticsResponse, Role, Role1, RoleByIdResponse, RolesResponse, Service, ServiceAnalytics, updateCategoryType, updateCoursetype, updateDocVerificationType, updateRoleType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalytics, UserAnalyticsData, UserAnalyticsResponse, userBanStatusUpdateType, userProfile } from "./type";
+import { approveCourse, approveKYC, assignRoles, createAdmin, createCategory, createOnlineCourse, createPhysicalCourse, createPlan, createRoles, createService, declineKYC, deleteAdminById, deleteCategoryById, deleteRoleById, deleteServiceById, disputeMessage, exportAnalyticReport, fetchAdmin, fetchAdminActivity, fetchAdminById, fetchAdminProfile, fetchCategory, fetchCategoryById, fetchCourseById, fetchCourses, fetchDashboardGeographicDistribution, fetchDashboardMetric, fetchDashboardRevenueTrends, fetchDashboardServiceCategories, fetchDashboardTopPerformingProviders, fetchDashboardUserGrowth, fetchDisbuteDetailById, fetchDisbuteList, fetchKYCDetailById, fetchNotificationPreferences, fetchPendingKYC, fetchPermissionList, fetchRevenueAnalysis, fetchRoleById, fetchRoleOnlyById, fetchRolesList, fetchService, fetchServiceAnalysis, fetchServiceById, fetchSubscriptionList, fetchTransactionDetailById, fetchTransactionList, fetchUserAnalysis, fetchUserById, fetchUsers, fetchWalletDetailById, fetchWalletList, getSettings, rejectCourse, removeRoles, resetNotificationPreferences, resolveDispute, signIn, updateAdminProfile, updateCategory, updateCourse, updateKYCDoc, updateNotificationPreferences, updateRole, updateService, updateSettings, updateUserProfile, updateUserStatus, userBanStatus } from "./api";
+import { addDisbuteMessageType, Admin_Query_Keys, AdminRole, AdminSettings, AdminUsersResponse1, approveCoursetype, approveKYCType, AssignRole, CourseDetail, createAdminType, createCategoryType, CreatePlanType, createServiceType, DashboardMetrics, GetCoursesResponse, GetKYCDetailResponse, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, Permission, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalytics, RevenueAnalyticsData, RevenueAnalyticsResponse, Role, Role1, RoleByIdResponse, RolesResponse, Service, ServiceAnalytics, updateCategoryType, updateCoursetype, updateDocVerificationType, updateRoleType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalytics, UserAnalyticsData, UserAnalyticsResponse, userBanStatusUpdateType, userProfile } from "./type";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
@@ -818,41 +818,32 @@ export const useResetNotificationPreferences = () => {
 
 //=====fetching pending KYC ========
 // export const useGetPendingKYC = (
-//     filters: {
-//     status?: string;
-//     priority?: string;
-//     keyword?: string;
-//   } = {}
+//   filters: { status?: string; priority?: string; keyword?: string; page?: number; limit?: number } = {}
 // ) => {
 //   const { token } = useAuth();
 
-//   return useQuery<any, Error>({
-//     queryKey: ["user-profile", filters],
-//     queryFn: () => fetchPendingKYC(token as string),
+//   return useQuery<PaginatedKYCResponse, Error>({
+//     queryKey: ["KYC-pending", filters],
+//     queryFn: () => fetchPendingKYC(token as string, filters),
 //     enabled: !!token,
 //     staleTime: 5 * 60 * 1000, // 5 minutes
 //   });
 // };
 
-export const useGetPendingKYC = (
-  filters: { status?: string; priority?: string; keyword?: string; page?: number; limit?: number } = {}
-) => {
+
+export const useGetPendingKYC = (filters: any = {}) => {
   const { token } = useAuth();
 
   return useQuery<PaginatedKYCResponse, Error>({
-    queryKey: ["user-profile", filters],
+    queryKey: ["KYC-pending", filters],
     queryFn: () => fetchPendingKYC(token as string, filters),
     enabled: !!token,
-    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
-
-
-
 //=====fetching KYC details========
 export const useGetKYCDetail = (id: string, token: string) => {
-  return useQuery<userProfile, Error>({ // Added type for useQuery
+  return useQuery<GetKYCDetailResponse, Error>({ // Added type for useQuery
     queryKey: [Admin_Query_Keys.Admin_ID, id],
     queryFn: () => fetchKYCDetailById(id, token),
     enabled: !!id && !!token, // Ensure it only runs if both are available
@@ -1099,11 +1090,9 @@ export const useGetTransactionList = (params: {
     queryKey: ['admin-transactions', params],
     queryFn: () => fetchTransactionList(token as string, params),
     enabled: !!token,
-    keepPreviousData: true,
     staleTime: 1000 * 60 * 5,
   });
 };
-
 
 //=====fetching transaction detail ========
 export const useGetTransactionDetail = (id: string, token: string) => {
@@ -1347,5 +1336,40 @@ export const useUpdateRole = (id: string) => {
         toast.error(`Error occurred: ${error.message}`);
       }
     },
+  });
+};
+
+
+// =========== update settings ============
+export const useUpdateSettings = () => {
+  const { token } = useAuth();
+
+  return useMutation({
+    mutationFn: (data: AdminSettings) =>
+      updateSettings(data, token),
+
+    onSuccess: () => {
+      toast.success("Settings updated successfully");
+    },
+
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          "Something went wrong"
+      );
+    },
+  });
+};
+
+
+
+
+export const useGetSettings = () => {
+  const { token } = useAuth();
+
+  return useQuery({
+    queryKey: ["admin-settings"],
+    queryFn: () => getSettings(token),
   });
 };

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, UserCheck } from "lucide-react";
 import Table from "@/components/Table";
@@ -21,9 +21,29 @@ interface RoleItem {
 
 interface AdminUser {
   id: string;
-  firstName: string;
-  lastName: string;
   email: string;
+  phoneNumber: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  isEmailVerified: boolean;
+  isPhoneVerified: boolean;
+  kycVerificationStatus: string | null;
+  kycType: string | null;
+  kycRejectionReason: string | null;
+  kycIdPicture: string | null;
+  profilePic: string | null;
+  address: string | null;
+  bio: string | null;
+  googleId: string | null;
+  appleId: string | null;
+  userType: "admin";
+  status: string;
+  payoutOption: string;
+  skills: string[] | null;
+  lockedUntil: string | null;
+  createdAt: string;
+  updatedAt: string;
+  
   [key: string]: any;
 }
 
@@ -83,11 +103,20 @@ const RolesPage = () => {
   const [selectedAdmin, setSelectedAdmin] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<string>("");
 
+
+useEffect(() => {
+  console.log("STATE UPDATED selectedAdmin:", selectedAdmin);
+}, [selectedAdmin]);
+
   // Hook for assigning role to selected admin
   const assignRoleMutation = useCreateAssignRole(selectedAdmin);
 
   const handleAssignRole = () => {
+    console.log("assign role");
+    console.log("selected admin", selectedAdmin);
+    console.log("selected role", selectedRole);
     if (!selectedAdmin || !selectedRole) return;
+    console.log(selectedAdmin);
 
     assignRoleMutation.mutate(
       { roleId: selectedRole },
@@ -138,8 +167,7 @@ const RolesPage = () => {
 
         {/* ---------- Modal ---------- */}
         {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative animate-fadeIn">
+            <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-50 p-4">            <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative animate-fadeIn">
               <h2 className="text-xl font-semibold mb-4">Assign Role to Admin</h2>
 
               {/* Admin Dropdown */}
