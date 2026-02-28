@@ -1,3 +1,118 @@
+// 'use client'
+
+// import React from "react";
+// import { ArrowUpRight, ArrowDownRight, Users, Briefcase, ShieldAlert, UserPlus } from "lucide-react";
+// import Header from "@/components/Header";
+// import { useGetDashboardMetric } from "@/app/actions/reactQuery";
+
+// const Dashboardpage = () => {
+//   const { data: metrics, isLoading, isError, error } = useGetDashboardMetric();
+
+//   const stats = [
+//     {
+//       title: "Total Users",
+//       value: isLoading ? "—" : (metrics?.totalUsers?.overall ?? 0).toLocaleString(),
+//       icon: <Users className="w-5 h-5 text-purple-500" />,
+//       change: isLoading
+//         ? "—"
+//         : `${metrics?.totalUsers?.last7Days >= 0 ? "+" : ""}${metrics?.totalUsers?.last7Days ?? 0} in the last 7 days`,
+//       isPositive: (metrics?.totalUsers?.last7Days ?? 0) >= 0,
+//     },
+//     {
+//       title: "New signups",
+//       value: isLoading ? "—" : (metrics?.newSignups?.overall ?? 0).toLocaleString(),
+//       icon: <UserPlus className="w-5 h-5 text-purple-500" />,
+//       change: isLoading
+//         ? "—"
+//         : `${metrics?.newSignups?.last7Days >= 0 ? "+" : ""}${metrics?.newSignups?.last7Days ?? 0} in the last 7 days`,
+//       isPositive: (metrics?.newSignups?.last7Days ?? 0) >= 0,
+//     },
+//     {
+//       title: "Pending KYC approvals",
+//       value: isLoading ? "—" : (metrics?.pendingKycApprovals?.overall ?? 0).toLocaleString(),
+//       icon: <ShieldAlert className="w-5 h-5 text-purple-500" />,
+//       change: isLoading
+//         ? "—"
+//         : `${metrics?.pendingKycApprovals?.last7Days >= 0 ? "+" : ""}${metrics?.pendingKycApprovals?.last7Days ?? 0} in the last 7 days`,
+//       isPositive: (metrics?.pendingKycApprovals?.last7Days ?? 0) >= 0,
+//     },
+//     {
+//       title: "Jobs posted",
+//       value: isLoading ? "—" : (metrics?.jobPosted?.overall ?? 0).toLocaleString(),
+//       icon: <Briefcase className="w-5 h-5 text-purple-500" />,
+//       change: isLoading
+//         ? "—"
+//         : `${metrics?.jobPosted?.last7Days >= 0 ? "+" : ""}${metrics?.jobPosted?.last7Days ?? 0} in the last 7 days`,
+//       isPositive: (metrics?.jobPosted?.last7Days ?? 0) >= 0,
+//     },
+//     {
+//       title: "Ongoing Disputes",
+//       value: isLoading ? "—" : (metrics?.ongoingDisputes?.overall ?? 0).toLocaleString(),
+//       icon: <ShieldAlert className="w-5 h-5 text-purple-500" />,
+//       change: isLoading
+//         ? "—"
+//         : `${metrics?.ongoingDisputes?.last7Days >= 0 ? "+" : ""}${metrics?.ongoingDisputes?.last7Days ?? 0} in the last 7 days`,
+//       isPositive: (metrics?.ongoingDisputes?.last7Days ?? 0) >= 0,
+//     },
+//   ];
+
+//   if (isError) {
+//     return (
+//       <div className="min-h-screen bg-white dark:bg-white text-gray-900">
+//         <Header title="Dashboard" />
+//         <main className="p-8">
+//           <p className="text-red-500">Failed to load dashboard metrics: {error?.message || "Unknown error"}</p>
+//         </main>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="min-h-screen bg-white dark:bg-white text-gray-900">
+//       {/* Header */}
+//       <Header title="Dashboard" />
+
+//       {/* Main Section */}
+//       <main className="p-8">
+//         {/* Grid of Stats Cards */}
+//         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+//           {stats.map((stat, index) => (
+//             <div
+//               key={index}
+//               className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between"
+//             >
+//               <div className="flex items-center gap-3 mb-2">
+//                 <div className="p-2 bg-purple-50 rounded-full">{stat.icon}</div>
+//               </div>
+//               <p className="text-sm text-gray-500 font-medium">{stat.title}</p>
+//               <h2 className="text-3xl font-semibold text-gray-900 mb-2">{stat.value}</h2>
+//               <div className="flex items-center gap-2">
+//                 {stat.isPositive ? (
+//                   <ArrowUpRight className="w-4 h-4 text-green-500" />
+//                 ) : (
+//                   <ArrowDownRight className="w-4 h-4 text-red-500" />
+//                 )}
+//                 <span
+//                   className={`text-sm ${
+//                     stat.isPositive ? "text-green-500" : "text-red-500"
+//                   }`}
+//                 >
+//                   {stat.change}
+//                 </span>
+//               </div>
+//             </div>
+//           ))}
+//         </div>
+//       </main>
+//     </div>
+//   );
+// };
+
+// export default Dashboardpage;
+
+
+
+
 'use client'
 
 import React from "react";
@@ -8,6 +123,13 @@ import { useGetDashboardMetric } from "@/app/actions/reactQuery";
 const Dashboardpage = () => {
   const { data: metrics, isLoading, isError, error } = useGetDashboardMetric();
 
+  // Helper variables to handle "possibly undefined" once for each stat
+  const totalUsersLast7 = metrics?.totalUsers?.last7Days ?? 0;
+  const newSignupsLast7 = metrics?.newSignups?.last7Days ?? 0;
+  const pendingKycLast7 = metrics?.pendingKycApprovals?.last7Days ?? 0;
+  const jobsPostedLast7 = metrics?.jobPosted?.last7Days ?? 0;
+  const disputesLast7 = metrics?.ongoingDisputes?.last7Days ?? 0;
+
   const stats = [
     {
       title: "Total Users",
@@ -15,8 +137,8 @@ const Dashboardpage = () => {
       icon: <Users className="w-5 h-5 text-purple-500" />,
       change: isLoading
         ? "—"
-        : `${metrics?.totalUsers?.last7Days >= 0 ? "+" : ""}${metrics?.totalUsers?.last7Days ?? 0} in the last 7 days`,
-      isPositive: (metrics?.totalUsers?.last7Days ?? 0) >= 0,
+        : `${totalUsersLast7 >= 0 ? "+" : ""}${totalUsersLast7} in the last 7 days`,
+      isPositive: totalUsersLast7 >= 0,
     },
     {
       title: "New signups",
@@ -24,8 +146,8 @@ const Dashboardpage = () => {
       icon: <UserPlus className="w-5 h-5 text-purple-500" />,
       change: isLoading
         ? "—"
-        : `${metrics?.newSignups?.last7Days >= 0 ? "+" : ""}${metrics?.newSignups?.last7Days ?? 0} in the last 7 days`,
-      isPositive: (metrics?.newSignups?.last7Days ?? 0) >= 0,
+        : `${newSignupsLast7 >= 0 ? "+" : ""}${newSignupsLast7} in the last 7 days`,
+      isPositive: newSignupsLast7 >= 0,
     },
     {
       title: "Pending KYC approvals",
@@ -33,8 +155,8 @@ const Dashboardpage = () => {
       icon: <ShieldAlert className="w-5 h-5 text-purple-500" />,
       change: isLoading
         ? "—"
-        : `${metrics?.pendingKycApprovals?.last7Days >= 0 ? "+" : ""}${metrics?.pendingKycApprovals?.last7Days ?? 0} in the last 7 days`,
-      isPositive: (metrics?.pendingKycApprovals?.last7Days ?? 0) >= 0,
+        : `${pendingKycLast7 >= 0 ? "+" : ""}${pendingKycLast7} in the last 7 days`,
+      isPositive: pendingKycLast7 >= 0,
     },
     {
       title: "Jobs posted",
@@ -42,8 +164,8 @@ const Dashboardpage = () => {
       icon: <Briefcase className="w-5 h-5 text-purple-500" />,
       change: isLoading
         ? "—"
-        : `${metrics?.jobPosted?.last7Days >= 0 ? "+" : ""}${metrics?.jobPosted?.last7Days ?? 0} in the last 7 days`,
-      isPositive: (metrics?.jobPosted?.last7Days ?? 0) >= 0,
+        : `${jobsPostedLast7 >= 0 ? "+" : ""}${jobsPostedLast7} in the last 7 days`,
+      isPositive: jobsPostedLast7 >= 0,
     },
     {
       title: "Ongoing Disputes",
@@ -51,14 +173,14 @@ const Dashboardpage = () => {
       icon: <ShieldAlert className="w-5 h-5 text-purple-500" />,
       change: isLoading
         ? "—"
-        : `${metrics?.ongoingDisputes?.last7Days >= 0 ? "+" : ""}${metrics?.ongoingDisputes?.last7Days ?? 0} in the last 7 days`,
-      isPositive: (metrics?.ongoingDisputes?.last7Days ?? 0) >= 0,
+        : `${disputesLast7 >= 0 ? "+" : ""}${disputesLast7} in the last 7 days`,
+      isPositive: disputesLast7 >= 0,
     },
   ];
 
   if (isError) {
     return (
-      <div className="min-h-screen bg-white dark:bg-white text-gray-900">
+      <div className="min-h-screen bg-white text-gray-900">
         <Header title="Dashboard" />
         <main className="p-8">
           <p className="text-red-500">Failed to load dashboard metrics: {error?.message || "Unknown error"}</p>
@@ -68,14 +190,11 @@ const Dashboardpage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-white text-gray-900">
-      {/* Header */}
+    <div className="min-h-screen bg-white text-gray-900">
       <Header title="Dashboard" />
 
-      {/* Main Section */}
       <main className="p-8">
-        {/* Grid of Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {stats.map((stat, index) => (
             <div
               key={index}

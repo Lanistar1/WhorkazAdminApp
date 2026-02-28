@@ -206,7 +206,8 @@ const tableData: AdminUser[] = filterStatus === "all"
     const rows = tableData.map((item) =>
       userColumns
         .map((col) => {
-          const value = item[col.key];
+          // const value = item[col.key];
+          const value = item[col.key as keyof AdminUser];
           // Escape commas and quotes
           if (typeof value === "string" && (value.includes(",") || value.includes('"'))) {
             return `"${value.replace(/"/g, '""')}"`;
