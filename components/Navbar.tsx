@@ -119,6 +119,7 @@ export const Navbar = () => {
     { name: 'Payments & Transactions', icon: <PaymentsIcon />, link: '/payments', permission: ['payments_management.read', 'payments_management.manage'] },
 
     { name: 'Apprenticeship', icon: <CoursesIcon />, link: '/courses', permission: ['courses_management.read', 'courses_management.manage'] },
+    { name: 'Course Review', icon: <CoursesIcon />, link: '/course-review', permission: ['courses_management.read', 'courses_management.manage'] },
 
     { name: 'Settings', icon: <SettingsIcon />, link: '/settings', permission: ['settings_management.read', 'settings_management.manage'] },
   ], []);

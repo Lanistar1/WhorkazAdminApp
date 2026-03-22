@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { toast } from "react-toastify";
-import { approveCourse, approveKYC, assignRoles, createAdmin, createCategory, createOnlineCourse, createPhysicalCourse, createPlan, createRoles, createService, declineKYC, deleteAdminById, deleteCategoryById, deleteRoleById, deleteServiceById, disputeMessage, exportAnalyticReport, fetchAdmin, fetchAdminActivity, fetchAdminById, fetchAdminProfile, fetchCategory, fetchCategoryById, fetchCourseById, fetchCourses, fetchDashboardGeographicDistribution, fetchDashboardMetric, fetchDashboardRevenueTrends, fetchDashboardServiceCategories, fetchDashboardTopPerformingProviders, fetchDashboardUserGrowth, fetchDisbuteDetailById, fetchDisbuteList, fetchKYCDetailById, fetchMyCourses, fetchMyEnrolledCourses, fetchNotificationPreferences, fetchPendingKYC, fetchPermissionList, fetchRevenueAnalysis, fetchRoleById, fetchRoleOnlyById, fetchRolesList, fetchService, fetchServiceAnalysis, fetchServiceById, fetchSubscriptionList, fetchTransactionDetailById, fetchTransactionList, fetchUserAnalysis, fetchUserById, fetchUsers, fetchWalletDetailById, fetchWalletList, getSettings, initiatePayment, rejectCourse, removeRoles, resetNotificationPreferences, resolveDispute, signIn, updateAdminProfile, updateCategory, updateCourse, updateKYCDoc, updateNotificationPreferences, updateRole, updateService, updateSettings, updateUserProfile, updateUserStatus, userBanStatus } from "./api";
+import { approveCourse, approveKYC, assignRoles, createAdmin, createCategory, createOnlineCourse, createPhysicalCourse, createPlan, createRoles, createService, declineKYC, deleteAdminById, deleteCategoryById, deleteRoleById, deleteServiceById, disputeMessage, exportAnalyticReport, fetchAdmin, fetchAdminActivity, fetchAdminById, fetchAdminCourseById, fetchAdminCourses, fetchAdminProfile, fetchCategory, fetchCategoryById, fetchCourseById, fetchCourses, fetchDashboardGeographicDistribution, fetchDashboardMetric, fetchDashboardRevenueTrends, fetchDashboardServiceCategories, fetchDashboardTopPerformingProviders, fetchDashboardUserGrowth, fetchDisbuteDetailById, fetchDisbuteList, fetchKYCDetailById, fetchMyCourses, fetchMyEnrolledCourses, fetchNotificationPreferences, fetchPendingKYC, fetchPermissionList, fetchRevenueAnalysis, fetchRoleById, fetchRoleOnlyById, fetchRolesList, fetchService, fetchServiceAnalysis, fetchServiceById, fetchSubscriptionList, fetchTransactionDetailById, fetchTransactionList, fetchUserAnalysis, fetchUserById, fetchUsers, fetchWalletDetailById, fetchWalletList, getSettings, initiatePayment, rejectCourse, removeRoles, resetNotificationPreferences, resolveDispute, signIn, updateAdminProfile, updateCategory, updateCourse, updateKYCDoc, updateNotificationPreferences, updateRole, updateService, updateSettings, updateUserProfile, updateUserStatus, userBanStatus } from "./api";
 import { addDisbuteMessageType, Admin_Query_Keys, AdminRole, AdminSettings, AdminUsersResponse1, approveCoursetype, approveKYCType, AssignRole, CourseDetail, CoursesResponse, createAdminType, createCategoryType, CreatePlanType, createServiceType, DashboardMetrics, EnrolledCoursesResponse, GetCoursesResponse, GetKYCDetailResponse, initiatePaymentPayload, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, Permission, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalytics, RevenueAnalyticsData, RevenueAnalyticsResponse, Role, Role1, RoleByIdResponse, RolesResponse, Service, ServiceAnalytics, updateCategoryType, updateCoursetype, updateDocVerificationType, updateRoleType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalytics, UserAnalyticsData, UserAnalyticsResponse, userBanStatusUpdateType, userProfile } from "./type";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
@@ -466,7 +466,7 @@ export const useGetCategory = () => {
   const { token } = useAuth();
 
   return useQuery<any, Error>({
-    queryKey: ["user-profile"],
+    queryKey: ["user-category"],
     queryFn: () => fetchCategory(token as string),
     enabled: !!token,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -1452,5 +1452,24 @@ export const useInitiatePayment= () => {
         error.response?.data?.message || "Error initiating payment"
       );
     },
+  });
+};
+
+// =========Get all courses ========
+export const useAdminCourses = (params: any) => {
+  const { token } = useAuth();
+  return useQuery({
+    queryKey: ["admin-courses", params],
+    queryFn: () => fetchAdminCourses(token as string, params),
+    enabled: !!token,
+  });
+};
+
+export const useAdminCourseById = (id: string) => {
+  const { token } = useAuth();
+  return useQuery({
+    queryKey: ["admin-course", id],
+    queryFn: () => fetchAdminCourseById(token as string, id),
+    enabled: !!token && !!id,
   });
 };

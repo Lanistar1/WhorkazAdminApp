@@ -1135,3 +1135,20 @@ export const initiatePayment = async (data: initiatePaymentPayload, token: strin
   });
   return res.data;
 };
+
+
+// --- Fetchers ---
+export const fetchAdminCourses = async (token: string, params: any) => {
+  const response = await axios.get(`${apiUrl}/api/v1/admin/courses`, {
+    params,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data.data;
+};
+
+export const fetchAdminCourseById = async (token: string, id: string) => {
+  const response = await axios.get(`${apiUrl}/api/v1/admin/courses/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data.data.course;
+};
