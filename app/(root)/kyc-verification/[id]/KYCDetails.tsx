@@ -94,7 +94,7 @@ const KYCDetailPage = () => {
             <div className="space-y-4">
               <InfoRow icon={<User size={18}/>} label="Full Name" value={`${user.user_info.first_name ?? 'Pending'} ${user.user_info.last_name ?? ''}`} />
               <InfoRow icon={<Mail size={18}/>} label="Email Address" value={user.user_info.email ?? 'Pending'} />
-              <InfoRow icon={<BadgeCheck size={18}/>} label="User Type" value={user.user_info.date_of_birth ?? 'Pending'} color="capitalize" />
+              <InfoRow icon={<BadgeCheck size={18}/>} label="KYC Status" value={user.status ?? 'Pending'} color="capitalize" />
               <InfoRow icon={<Calendar size={18}/>} label="Submitted On" value={
                 user?.submitted_at
                   ? new Date(user.submitted_at).toLocaleDateString()
