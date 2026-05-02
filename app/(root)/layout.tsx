@@ -27,7 +27,10 @@ export default function RootLayout({
   return (
     <main className="h-screen w-screen overflow-hidden">
       {/* Fixed Navbar */}
-      <div className="fixed top-0 left-0 h-full z-50 overflow-auto">
+      {/* <div className="fixed top-0 left-0 h-full z-50 overflow-auto">
+        <Navbar />
+      </div> */}
+      <div className="fixed lg:fixed lg:top-0 lg:left-0 md:h-screen lg:w-[305px] lg:z-50 lg:block md:overflow-y-auto lg:border-r lg:border-gray-200">
         <Navbar />
       </div>
 

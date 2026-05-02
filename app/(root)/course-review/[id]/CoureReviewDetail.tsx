@@ -56,20 +56,16 @@ const CoureReviewDetail = ({ id }: CourseDetailProps) => {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-xl shadow-sm border border-gray-100 gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-blue-100 text-blue-700">
-              {course.category}
-            </span>
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
-              course.status === 'draft' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
-            }`}>
-              {course.status}
-            </span>
-          </div>
           <h1 className="text-3xl font-bold text-gray-900 capitalize">{course.title}</h1>
           <p className="text-gray-500 flex items-center gap-1 mt-1 text-sm">
             Created on {new Date(course.createdAt).toLocaleDateString()}
           </p>
+          <div className="flex items-center gap-2 mb-1 mt-2">
+            <p className='text-[#222222]'>Course Category:</p>
+            <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-blue-100 text-blue-700">
+              {course.category}
+            </span>
+          </div>
         </div>
         <div className="flex gap-3">
           <button 
