@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
-import { addDisbuteMessageType, AdminRole, AdminSettings, AdminUsersResponse1, approveCoursetype, approveKYCType, AssignRole, CourseDetail, CourseDetailResponse, CoursesResponse, createAdminType, createCategoryType, CreateOnlineCoursePayload, CreatePhysicalCoursePayload, CreatePlanType, createServiceType, DashboardMetrics, EnrolledCoursesResponse, GetCoursesResponse, initiatePaymentPayload, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, Permission, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalyticsData, Role1, RoleByIdResponse, RolesResponse, Service, ServiceAnalytics, ServiceApiResponse, updateCategoryType, updateCoursetype, updateDocVerificationType, updateRoleType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalyticsData, userBanStatusUpdateType, userProfile } from "./type";
+import { addDisbuteMessageType, AdminRole, AdminSettings, AdminUsersResponse1, approveCoursetype, approveKYCType, AssignRole, CourseDetail, CourseDetailResponse, CoursesResponse, createAdminType, createCategoryType, CreateOnlineCoursePayload, CreatePhysicalCoursePayload, CreatePlanType, createServiceType, DashboardMetrics, EnrolledCoursesResponse, GetCoursesResponse, initiatePaymentPayload, LoginCredentials, LoginResponse, NotificationPreferencesType, NotificationType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, Permission, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalyticsData, Role1, RoleByIdResponse, RolesResponse, Service, ServiceAnalytics, ServiceApiResponse, updateCategoryType, updateCoursetype, updateDocVerificationType, updateRoleType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalyticsData, userBanStatusUpdateType, userProfile } from "./type";
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -158,7 +158,7 @@ export const updateUserStatus = async (data: updateUserStatusType, token: string
 
 //======== update user ban / unban status ================
 export const userBanStatus = async (data: userBanStatusUpdateType, token: string | null, id: string) => {
-  const res = await axios.patch(`${apiUrl}/api/v1/admin/users/${id}/ban`, data, {
+  const res = await axios.put(`${apiUrl}/api/v1/admin/users/${id}/ban`, data, {
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
@@ -1151,4 +1151,78 @@ export const fetchAdminCourseById = async (token: string, id: string) => {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data.data.course;
+};
+
+
+
+// ================= FETCH ALL NOTIFICATIONS =================
+export const fetchNotifications = async (token: string): Promise<NotificationType[]> => {
+  if (!token) throw new Error("Authentication token missing");
+
+  const res = await axios.get(`${apiUrl}/api/v1/notifications`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return res.data?.data?.notifications || [];
+};
+
+// ================= FETCH NOTIFICATION DETAIL =================
+export const fetchNotificationDetail = async (
+  id: string,
+  token: string
+): Promise<NotificationType> => {
+  if (!token) throw new Error("Authentication token missing");
+
+  const res = await axios.get(`${apiUrl}/api/v1/notifications/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return res.data?.data || res.data;
+};
+
+// ================= MARK AS READ =================
+export const markNotificationAsRead = async (id: string, token: string) => {
+  if (!token) throw new Error("Authentication token missing");
+
+  const res = await axios.patch(
+    `${apiUrl}/api/v1/notifications/${id}/read`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return res.data;
+};
+
+// ================= DELETE NOTIFICATION =================
+export const deleteNotificationById = async (id: string, token: string): Promise<void> => {
+  if (!token) throw new Error("Authentication token missing");
+
+  const res = await axios.delete(`${apiUrl}/api/v1/notifications/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (res.status !== 200 && res.status !== 204) {
+    throw new Error("Failed to delete notification.");
+  }
+};
+
+export const fetchAdminUserById = async (token: string, id: string) => {
+  const res = await axios.get(
+    `${apiUrl}/api/v1/admin/users/${id}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+
+  return res.data.data.user;
 };

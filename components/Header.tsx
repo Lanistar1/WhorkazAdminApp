@@ -1,6 +1,8 @@
 
 import React from "react";
 import { Bell, MessageSquare, LogOutIcon } from "lucide-react";
+import Link from "next/link";
+
 
 interface HeaderProps {
   title: string; // dynamic prop for the heading text
@@ -31,7 +33,9 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
       <h1 className="text-2xl font-bold">{title}</h1>
 
       <div className="flex items-center space-x-4">
-        <Bell className="h-5 w-5 text-gray-500 dark:text-gray-500" />
+        <Link href="/notifications">
+              <Bell className="h-5 w-5 text-gray-500 dark:text-gray-500" />
+          </Link>
         {/* <MessageSquare className="hidden md:flex h-5 w-5 text-gray-500 dark:text-gray-500" /> */}
         <LogOutIcon className=" md:hidden h-5 w-5 text-gray-500 dark:text-gray-500"/>
       </div>

@@ -129,7 +129,7 @@ export type updateUserProfileType = {
   first_name: string;
   last_name: string;
   phone: string;
-  status: boolean;
+  status: string;
 };
 
 //========== Approve course  ========
@@ -1286,4 +1286,13 @@ export type initiatePaymentPayload = {
   _callbackUrl?: string;
 }
 
-
+// ================= TYPES =================
+export type NotificationType = {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  status: "read" | "unread";
+  createdAt: string;
+  updatedAt: string;
+};

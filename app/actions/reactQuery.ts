@@ -3,11 +3,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { toast } from "react-toastify";
-import { approveCourse, approveKYC, assignRoles, createAdmin, createCategory, createOnlineCourse, createPhysicalCourse, createPlan, createRoles, createService, declineKYC, deleteAdminById, deleteCategoryById, deleteRoleById, deleteServiceById, disputeMessage, exportAnalyticReport, fetchAdmin, fetchAdminActivity, fetchAdminById, fetchAdminCourseById, fetchAdminCourses, fetchAdminProfile, fetchCategory, fetchCategoryById, fetchCourseById, fetchCourses, fetchDashboardGeographicDistribution, fetchDashboardMetric, fetchDashboardRevenueTrends, fetchDashboardServiceCategories, fetchDashboardTopPerformingProviders, fetchDashboardUserGrowth, fetchDisbuteDetailById, fetchDisbuteList, fetchKYCDetailById, fetchMyCourses, fetchMyEnrolledCourses, fetchNotificationPreferences, fetchPendingKYC, fetchPermissionList, fetchRevenueAnalysis, fetchRoleById, fetchRoleOnlyById, fetchRolesList, fetchService, fetchServiceAnalysis, fetchServiceById, fetchSubscriptionList, fetchTransactionDetailById, fetchTransactionList, fetchUserAnalysis, fetchUserById, fetchUsers, fetchWalletDetailById, fetchWalletList, getSettings, initiatePayment, rejectCourse, removeRoles, resetNotificationPreferences, resolveDispute, signIn, updateAdminProfile, updateCategory, updateCourse, updateKYCDoc, updateNotificationPreferences, updateRole, updateService, updateSettings, updateUserProfile, updateUserStatus, userBanStatus } from "./api";
-import { addDisbuteMessageType, Admin_Query_Keys, AdminRole, AdminSettings, AdminUsersResponse1, approveCoursetype, approveKYCType, AssignRole, CourseDetail, CoursesResponse, createAdminType, createCategoryType, CreatePlanType, createServiceType, DashboardMetrics, EnrolledCoursesResponse, GetCoursesResponse, GetKYCDetailResponse, initiatePaymentPayload, LoginCredentials, LoginResponse, NotificationPreferencesType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, Permission, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalytics, RevenueAnalyticsData, RevenueAnalyticsResponse, Role, Role1, RoleByIdResponse, RolesResponse, Service, ServiceAnalytics, updateCategoryType, updateCoursetype, updateDocVerificationType, updateRoleType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalytics, UserAnalyticsData, UserAnalyticsResponse, userBanStatusUpdateType, userProfile } from "./type";
+import { approveCourse, approveKYC, assignRoles, createAdmin, createCategory, createOnlineCourse, createPhysicalCourse, createPlan, createRoles, createService, declineKYC, deleteAdminById, deleteCategoryById, deleteNotificationById, deleteRoleById, deleteServiceById, disputeMessage, exportAnalyticReport, fetchAdmin, fetchAdminActivity, fetchAdminById, fetchAdminCourseById, fetchAdminCourses, fetchAdminProfile, fetchAdminUserById, fetchCategory, fetchCategoryById, fetchCourseById, fetchCourses, fetchDashboardGeographicDistribution, fetchDashboardMetric, fetchDashboardRevenueTrends, fetchDashboardServiceCategories, fetchDashboardTopPerformingProviders, fetchDashboardUserGrowth, fetchDisbuteDetailById, fetchDisbuteList, fetchKYCDetailById, fetchMyCourses, fetchMyEnrolledCourses, fetchNotificationDetail, fetchNotificationPreferences, fetchNotifications, fetchPendingKYC, fetchPermissionList, fetchRevenueAnalysis, fetchRoleById, fetchRoleOnlyById, fetchRolesList, fetchService, fetchServiceAnalysis, fetchServiceById, fetchSubscriptionList, fetchTransactionDetailById, fetchTransactionList, fetchUserAnalysis, fetchUserById, fetchUsers, fetchWalletDetailById, fetchWalletList, getSettings, initiatePayment, markNotificationAsRead, rejectCourse, removeRoles, resetNotificationPreferences, resolveDispute, signIn, updateAdminProfile, updateCategory, updateCourse, updateKYCDoc, updateNotificationPreferences, updateRole, updateService, updateSettings, updateUserProfile, updateUserStatus, userBanStatus } from "./api";
+import { addDisbuteMessageType, Admin_Query_Keys, AdminRole, AdminSettings, AdminUsersResponse1, approveCoursetype, approveKYCType, AssignRole, CourseDetail, CoursesResponse, createAdminType, createCategoryType, CreatePlanType, createServiceType, DashboardMetrics, EnrolledCoursesResponse, GetCoursesResponse, GetKYCDetailResponse, initiatePaymentPayload, LoginCredentials, LoginResponse, NotificationPreferencesType, NotificationType, PaginatedCourses, PaginatedKYCResponse, PaginatedPaymentsResponse, PaginatedUsers, Permission, rejectCoursetype, rejectKYCType, resolveDisbuteType, RevenueAnalytics, RevenueAnalyticsData, RevenueAnalyticsResponse, Role, Role1, RoleByIdResponse, RolesResponse, Service, ServiceAnalytics, updateCategoryType, updateCoursetype, updateDocVerificationType, updateRoleType, updateServiceType, updateUserProfileType, updateUserStatusType, UserAnalytics, UserAnalyticsData, UserAnalyticsResponse, userBanStatusUpdateType, userProfile } from "./type";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 
 // ======= Signin call ========
@@ -183,15 +184,31 @@ export const useUserById = (id: string, token: string) => {
   });
 };
 
+//=====fetching User detail endpoint call that was later used ========
+export const useAdminUserById = (id: string) => {
+  const { token } = useAuth();
+
+  return useQuery({
+    queryKey: ["admin-user", id],
+    queryFn: () => fetchAdminUserById(token as string, id),
+    enabled: !!token && !!id,
+  });
+};
+
 
 //======== update user status ================
 export const useUpdateUserStatus = (id: string) => {
   const { token } = useAuth();
+  //const router = useRouter();
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (data: updateUserStatusType) => updateUserStatus(data, token, id),
     onSuccess: () => {
       // Show success toast notification
       toast.success(`User status updated successfully`);
+      //router.refresh();
+      queryClient.invalidateQueries({ queryKey: ["admin-user", id] });
     },
     onError: (error: any) => {
       // Show error toast notification
@@ -215,11 +232,17 @@ export const useUpdateUserStatus = (id: string) => {
 //======== update user ban / unban status ================
 export const useUpdateUserBanStatus = (id: string) => {
   const { token } = useAuth();
+  //const router = useRouter();
+    const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (data: userBanStatusUpdateType) => userBanStatus(data, token, id),
     onSuccess: () => {
       // Show success toast notification
       toast.success(`User ban status updated successfully`);
+      //router.refresh();
+      queryClient.invalidateQueries({ queryKey: ["admin-user", id] });
+
     },
     onError: (error: any) => {
       // Show error toast notification
@@ -243,11 +266,17 @@ export const useUpdateUserBanStatus = (id: string) => {
 //======== update user profile ================
 export const useUpdateUserProfile = (id: string) => {
   const { token } = useAuth();
+  //const router = useRouter();
+    const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (data: updateUserProfileType) => updateUserProfile(data, token, id),
     onSuccess: () => {
       // Show success toast notification
-      toast.success(`User status updated successfully`);
+      toast.success(`User profile updated successfully`);
+      //router.refresh();
+      queryClient.invalidateQueries({ queryKey: ["admin-user", id] });
+
     },
     onError: (error: any) => {
       // Show error toast notification
@@ -1473,3 +1502,69 @@ export const useAdminCourseById = (id: string) => {
     enabled: !!token && !!id,
   });
 };
+
+
+
+// ================= HOOK: GET NOTIFICATIONS =================
+export const useNotifications = () => {
+  const { token } = useAuth();
+
+  return useQuery<NotificationType[], Error>({
+    queryKey: ["notifications"],
+    queryFn: () => fetchNotifications(token as string),
+    enabled: !!token,
+    staleTime: 1000 * 30,
+  });
+};
+
+// ================= HOOK: GET NOTIFICATION DETAIL =================
+export const useNotificationDetail = (id: string | null) => {
+  const { token } = useAuth();
+
+  return useQuery<NotificationType, Error>({
+    queryKey: ["notification-detail", id],
+    queryFn: () => fetchNotificationDetail(id as string, token as string),
+    enabled: !!token && !!id,
+  });
+};
+
+// ================= HOOK: MARK AS READ =================
+export const useMarkNotificationAsRead = () => {
+  const queryClient = useQueryClient();
+  const { token } = useAuth();
+
+  return useMutation({
+    mutationFn: (id: string) => markNotificationAsRead(id, token as string),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["notification-detail"] });
+    },
+
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed to mark notification as read");
+    },
+  });
+};
+
+// ================= HOOK: DELETE NOTIFICATION =================
+export const useDeleteNotification = () => {
+  const queryClient = useQueryClient();
+  const { token } = useAuth();
+
+  return useMutation<void, Error, string>({
+    mutationFn: (id: string) => deleteNotificationById(id, token as string),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      toast.success("Notification deleted.");
+    },
+
+    onError: (error) => {
+      toast.error(`Error deleting notification: ${error.message}`);
+    },
+  });
+};
+
+
+

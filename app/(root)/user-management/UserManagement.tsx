@@ -1,18 +1,274 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-'use client'
+// /* eslint-disable @typescript-eslint/no-explicit-any */
+// 'use client'
+
+// import React, { useState } from "react";
+// import Table from "@/components/Table";
+// import Header from "@/components/Header";
+// import { Search, Download } from "lucide-react";
+
+// import { useGetUsers } from "@/app/actions/reactQuery"; // ← adjust path if needed
+// // import { useAuth } from wherever your auth context/hook is
+
+// interface TableColumn {
+//   key: string;
+//   label: string;
+//   render?: (item: any) => React.ReactNode;
+// }
+
+// const getStatusClass = (status: string) => {
+//   switch (status?.toLowerCase()) {
+//     case "active":
+//       return "bg-green-100 text-green-800";
+//     case "inactive":
+//       return "bg-red-100 text-red-800";
+//     case "pending":
+//       return "bg-yellow-100 text-yellow-800";
+//     default:
+//       return "bg-gray-100 text-gray-800";
+//   }
+// };
+
+
+// interface DisplayUser {
+//   id: string;
+//   email: string;
+//   firstName?: string | null;
+//   lastName?: string | null;
+//   userType?: string;
+//   status?: string;
+//   createdAt?: string;
+//   // keep [key: string]: any; if you really need it
+//   [key: string]: any;
+// }
+
+// const UserManagement = () => {
+//   const [searchTerm, setSearchTerm] = useState("");
+//   const [filterStatus, setFilterStatus] = useState("all");
+
+
+//   const { 
+//     data, 
+//     isLoading, 
+//     isError, 
+//     error 
+//   } = useGetUsers({
+//     keyword:   searchTerm.trim() || undefined,
+//     status:    filterStatus === "all" ? undefined : filterStatus,
+//     // role:   "admin",          
+//   });
+
+//   const users = data?.users ?? [] as DisplayUser[];
+//   // Client-side search (only if your API doesn't support keyword filtering)
+//   const filteredUsers = users.filter(user => {
+//     if (filterStatus === "all") return true;
+//     return user.status?.toLowerCase() === filterStatus.toLowerCase();
+//   });
+
+
+//   if (isLoading) {
+//     return <div className="p-6">Loading users...</div>;
+//   }
+
+//   if (isError) {
+//     return (
+//       <div className="p-6 text-red-600">
+//         Failed to load users: {error?.message || "Unknown error"}
+//       </div>
+//     );
+//   }
+
+//   // Final data to show in table
+//   const tableData = filterStatus === "all" 
+//     ? filteredUsers 
+//     : filteredUsers.filter(u => u.status?.toLowerCase() === filterStatus.toLowerCase());
+
+
+
+//   const userColumns: TableColumn[] = [
+//     {
+//       key: "name",
+//       label: "Name",
+//       render: (item) => {
+//         const fullName = [item.firstName, item.lastName]
+//           .filter(Boolean)
+//           .join(" ")
+//           .trim();
+
+//         return fullName || item.email?.split("@")[0] || "—";
+//       },
+//     },
+//     {
+//       key: "email",
+//       label: "Email",
+//     },
+//     {
+//       key: "role",
+//       label: "Role",
+//       render: (item) => {
+//         // userType is the real field
+//         const type = item.userType || "—";
+//         return type.charAt(0).toUpperCase() + type.slice(1); // Capitalize
+//       },
+//     },
+//     {
+//       key: "status",
+//       label: "Status",
+//       render: (item) => (
+//         <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusClass(item.status)}`}>
+//           {item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : "Unknown"}
+//         </span>
+//       ),
+//     },
+//     {
+//       key: "date",
+//       label: "Signup date",
+//       render: (item) => {
+//         if (!item.createdAt) return "—";
+//         try {
+//           const date = new Date(item.createdAt);
+//           return date.toLocaleDateString("en-GB", {
+//             day: "2-digit",
+//             month: "short",
+//             year: "numeric",
+//           });
+//           // or: return date.toISOString().split("T")[0]; // YYYY-MM-DD
+//         } catch {
+//           return "—";
+//         }
+//       },
+//     },
+//   ];
+
+//   const handleAction = (item: DisplayUser, action: string) => {
+//     console.log(`Action: ${action} on user`, item);
+//     // Example: router.push(`/admin/users/${item.id}`);
+//     // or open modal, call delete API, etc.
+//   };
+
+//   const exportToCSV = () => {
+//     if (tableData.length === 0) return;
+
+//     const headers = userColumns.map((col) => col.label).join(",");
+//     const rows = tableData.map((item) =>
+//       userColumns
+//         .map((col) => {
+//           //const value = item[col.key];
+//           const value = item[col.key as keyof typeof item];
+
+//           // Escape commas and quotes
+//           if (typeof value === "string" && (value.includes(",") || value.includes('"'))) {
+//             return `"${value.replace(/"/g, '""')}"`;
+//           }
+//           return value ?? "";
+//         })
+//         .join(",")
+//     );
+
+//     const csvContent = [headers, ...rows].join("\n");
+//     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+//     const url = URL.createObjectURL(blob);
+//     const link = document.createElement("a");
+//     link.href = url;
+//     link.download = `users_${new Date().toISOString().slice(0,10)}.csv`;
+//     link.click();
+//     URL.revokeObjectURL(url);
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-white dark:bg-white text-gray-900">
+//       <Header title="User Management" />
+
+//       <div className="p-6">
+//         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+//           {/* Search Bar */}
+//           <div className="relative w-full md:w-2/3">
+//             <input
+//               type="text"
+//               placeholder="Search by name, email..."
+//               value={searchTerm}
+//               onChange={(e) => setSearchTerm(e.target.value)}
+//               className="w-full p-2 pl-10 border border-[#C7C7CF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3900DC]"
+//             />
+//             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
+//           </div>
+
+//           {/* Filter + Export */}
+//           <div className="flex items-center gap-4 w-full md:w-auto">
+//             <select
+//               value={filterStatus}
+//               onChange={(e) => setFilterStatus(e.target.value)}
+//               className="p-2 border border-[#C7C7CF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3900DC]"
+//             >
+//               <option value="all">All Statuses</option>
+//               <option value="active">Active</option>
+//               <option value="inactive">Inactive</option>
+//               <option value="pending">Pending</option>
+//             </select>
+
+//             <button
+//               onClick={exportToCSV}
+//               disabled={isLoading || tableData.length === 0}
+//               className="flex items-center gap-2 px-4 py-2 text-black border border-[#C7C7CF] rounded-lg hover:bg-gray-100 disabled:opacity-50"
+//             >
+//               <Download className="h-5 w-5" />
+//               Export CSV
+//             </button>
+//           </div>
+//         </div>
+
+//         {isLoading && (
+//           <div className="text-center py-10">
+//             <p className="text-gray-500">Loading users...</p>
+//           </div>
+//         )}
+
+//         {isError && (
+//           <div className="text-center py-10 text-red-600">
+//             <p>Failed to load users</p>
+//             <p className="text-sm">{(error as any)?.message || "Unknown error"}</p>
+//           </div>
+//         )}
+
+//         {!isLoading && !isError && (
+//           <Table 
+//             columns={userColumns} 
+//             data={tableData} 
+//             onAction={handleAction} 
+//             // isLoading={isLoading}   ← pass if your Table supports skeleton/loading state
+//           />
+//         )}
+
+//         {!isLoading && !isError && tableData.length === 0 && (
+//           <div className="text-center py-12 text-gray-500">
+//             No users found matching your filters.
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default UserManagement;
+
+
+'use client';
 
 import React, { useState } from "react";
-import Table from "@/components/Table";
 import Header from "@/components/Header";
-import { Search, Download } from "lucide-react";
+import { Search, Download, MoreHorizontal } from "lucide-react";
+import { useGetUsers } from "@/app/actions/reactQuery";
+import Link from "next/link";
 
-import { useGetUsers } from "@/app/actions/reactQuery"; // ← adjust path if needed
-// import { useAuth } from wherever your auth context/hook is
 
-interface TableColumn {
-  key: string;
-  label: string;
-  render?: (item: any) => React.ReactNode;
+interface DisplayUser {
+  id: string;
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  userType?: string;
+  status?: string;
+  createdAt?: string;
+  [key: string]: any;
 }
 
 const getStatusClass = (status: string) => {
@@ -28,159 +284,59 @@ const getStatusClass = (status: string) => {
   }
 };
 
-
-interface DisplayUser {
-  id: string;
-  email: string;
-  firstName?: string | null;
-  lastName?: string | null;
-  userType?: string;
-  status?: string;
-  createdAt?: string;
-  // keep [key: string]: any; if you really need it
-  [key: string]: any;
-}
-
 const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
-
-  const { 
-    data, 
-    isLoading, 
-    isError, 
-    error 
-  } = useGetUsers({
-    keyword:   searchTerm.trim() || undefined,
-    status:    filterStatus === "all" ? undefined : filterStatus,
-    // role:   "admin",          
+  const { data, isLoading, isError, error } = useGetUsers({
+    keyword: searchTerm.trim() || undefined,
+    status: filterStatus === "all" ? undefined : filterStatus,
   });
 
-  const users = data?.users ?? [] as DisplayUser[];
-  // Client-side search (only if your API doesn't support keyword filtering)
-  const filteredUsers = users.filter(user => {
+  const users = (data?.users ?? []) as DisplayUser[];
+
+  const tableData = users.filter((user) => {
     if (filterStatus === "all") return true;
     return user.status?.toLowerCase() === filterStatus.toLowerCase();
   });
 
-
-  if (isLoading) {
-    return <div className="p-6">Loading users...</div>;
-  }
-
-  if (isError) {
-    return (
-      <div className="p-6 text-red-600">
-        Failed to load users: {error?.message || "Unknown error"}
-      </div>
-    );
-  }
-
-  // Final data to show in table
-  const tableData = filterStatus === "all" 
-    ? filteredUsers 
-    : filteredUsers.filter(u => u.status?.toLowerCase() === filterStatus.toLowerCase());
-
-
-
-  const userColumns: TableColumn[] = [
-    {
-      key: "name",
-      label: "Name",
-      render: (item) => {
-        const fullName = [item.firstName, item.lastName]
-          .filter(Boolean)
-          .join(" ")
-          .trim();
-
-        return fullName || item.email?.split("@")[0] || "—";
-      },
-    },
-    {
-      key: "email",
-      label: "Email",
-    },
-    {
-      key: "role",
-      label: "Role",
-      render: (item) => {
-        // userType is the real field
-        const type = item.userType || "—";
-        return type.charAt(0).toUpperCase() + type.slice(1); // Capitalize
-      },
-    },
-    {
-      key: "status",
-      label: "Status",
-      render: (item) => (
-        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusClass(item.status)}`}>
-          {item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : "Unknown"}
-        </span>
-      ),
-    },
-    {
-      key: "date",
-      label: "Signup date",
-      render: (item) => {
-        if (!item.createdAt) return "—";
-        try {
-          const date = new Date(item.createdAt);
-          return date.toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          });
-          // or: return date.toISOString().split("T")[0]; // YYYY-MM-DD
-        } catch {
-          return "—";
-        }
-      },
-    },
-  ];
-
-  const handleAction = (item: DisplayUser, action: string) => {
-    console.log(`Action: ${action} on user`, item);
-    // Example: router.push(`/admin/users/${item.id}`);
-    // or open modal, call delete API, etc.
-  };
-
   const exportToCSV = () => {
-    if (tableData.length === 0) return;
+    if (!tableData.length) return;
 
-    const headers = userColumns.map((col) => col.label).join(",");
-    const rows = tableData.map((item) =>
-      userColumns
-        .map((col) => {
-          //const value = item[col.key];
-          const value = item[col.key as keyof typeof item];
+    const headers = ["Name", "Email", "Role", "Status", "Signup Date"];
 
-          // Escape commas and quotes
-          if (typeof value === "string" && (value.includes(",") || value.includes('"'))) {
-            return `"${value.replace(/"/g, '""')}"`;
-          }
-          return value ?? "";
-        })
-        .join(",")
-    );
+    const rows = tableData.map((u) => {
+      const name = `${u.firstName || ""} ${u.lastName || ""}`.trim() ||
+        u.email.split("@")[0];
 
-    const csvContent = [headers, ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const date = u.createdAt
+        ? new Date(u.createdAt).toLocaleDateString()
+        : "";
+
+      return [name, u.email, u.userType, u.status, date].join(",");
+    });
+
+    const csv = [headers.join(","), ...rows].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
+
     const link = document.createElement("a");
     link.href = url;
-    link.download = `users_${new Date().toISOString().slice(0,10)}.csv`;
+    link.download = `users_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
-    URL.revokeObjectURL(url);
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-white text-gray-900">
+    <div className="min-h-screen bg-white text-gray-900">
       <Header title="User Management" />
 
       <div className="p-6">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-          {/* Search Bar */}
+
+        {/* Filters */}
+        <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+
+          {/* Search */}
           <div className="relative w-full md:w-2/3">
             <input
               type="text"
@@ -192,57 +348,129 @@ const UserManagement = () => {
             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
           </div>
 
-          {/* Filter + Export */}
-          <div className="flex items-center gap-4 w-full md:w-auto">
+          {/* Status + Export */}
+          <div className="flex gap-3">
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="p-2 border border-[#C7C7CF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3900DC]"
+              className="p-2 border border-[#C7C7CF] rounded-lg"
             >
               <option value="all">All Statuses</option>
               <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+              <option value="suspended">Suspended</option>
               <option value="pending">Pending</option>
+              <option value="banned">Banned</option>
             </select>
 
             <button
               onClick={exportToCSV}
-              disabled={isLoading || tableData.length === 0}
-              className="flex items-center gap-2 px-4 py-2 text-black border border-[#C7C7CF] rounded-lg hover:bg-gray-100 disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-100"
             >
               <Download className="h-5 w-5" />
-              Export CSV
+              Export
             </button>
           </div>
         </div>
 
+        {/* Loading */}
         {isLoading && (
-          <div className="text-center py-10">
-            <p className="text-gray-500">Loading users...</p>
-          </div>
+          <p className="text-center py-10 text-gray-500">Loading users...</p>
         )}
 
+        {/* Error */}
         {isError && (
-          <div className="text-center py-10 text-red-600">
-            <p>Failed to load users</p>
-            <p className="text-sm">{(error as any)?.message || "Unknown error"}</p>
-          </div>
+          <p className="text-center py-10 text-red-600">
+            {(error as any)?.message || "Failed to load users"}
+          </p>
         )}
 
+        {/* TABLE */}
         {!isLoading && !isError && (
-          <Table 
-            columns={userColumns} 
-            data={tableData} 
-            onAction={handleAction} 
-            // isLoading={isLoading}   ← pass if your Table supports skeleton/loading state
-          />
-        )}
+          <div className="overflow-x-auto border border-[#C7C7CF] rounded-[12px]">
+            <table className="w-full text-left">
 
-        {!isLoading && !isError && tableData.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            No users found matching your filters.
+              {/* Header */}
+              <thead className="bg-gray-50 text-sm text-[#95959F]">
+                <tr>
+                  <th className="p-4">Name</th>
+                  <th className="p-4">Email</th>
+                  <th className="p-4">Role</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4">Signup Date</th>
+                  <th className="p-4 text-right">Action</th>
+                </tr>
+              </thead>
+
+              {/* Body */}
+              <tbody>
+                {tableData.map((user, index) => {
+                  const name =
+                    `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+                    user.email.split("@")[0];
+
+                  return (
+                    <tr
+                      key={user.id}
+                      className={`border-t border-gray-50 ${
+                        index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      }`}
+                    >
+                      <td className="p-4 font-medium">{name}</td>
+
+                      <td className="p-4 text-gray-600">{user.email}</td>
+
+                      <td className="p-4 capitalize">
+                        {user.userType || "—"}
+                      </td>
+
+                      <td className="p-4">
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusClass(
+                            user.status || ""
+                          )}`}
+                        >
+                          {user.status || "Unknown"}
+                        </span>
+                      </td>
+
+                      <td className="p-4 text-gray-600">
+                        {user.createdAt
+                          ? new Date(user.createdAt).toLocaleDateString()
+                          : "—"}
+                      </td>
+
+                      {/* ACTION (VIEW ONLY) */}
+                      <td className="p-4 text-right">
+                        <Link href={`/user-management/${user.id}`} key={user.id}>
+                            <button
+                              onClick={() =>
+                                console.log("View user:", user.id)
+                              }
+                              className="text-[#3900DC] font-medium hover:underline cursor-pointer"
+                            >
+                              View Details
+                            </button>
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+
+                {tableData.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="text-center py-10 text-gray-500"
+                    >
+                      No users found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         )}
+
       </div>
     </div>
   );
